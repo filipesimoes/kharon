@@ -1,11 +1,11 @@
-package br.gov.pf.labld.kharon.renderers;
+package org.kharon.renderers;
 
 import java.awt.Color;
 import java.awt.Graphics;
 
-import br.gov.pf.labld.kharon.Edge;
-import br.gov.pf.labld.kharon.Graph;
-import br.gov.pf.labld.kharon.Node;
+import org.kharon.Edge;
+import org.kharon.Graph;
+import org.kharon.Node;
 
 public class DefaultEdgeRenderer implements EdgeRenderer {
 

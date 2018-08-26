@@ -1,12 +1,12 @@
-package br.gov.pf.labld.kharon.renderers;
+package org.kharon.renderers;
 
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 
-import br.gov.pf.labld.kharon.Graph;
-import br.gov.pf.labld.kharon.Node;
+import org.kharon.Graph;
+import org.kharon.Node;
 
 public class CircleNodeRenderer implements NodeRenderer {
 

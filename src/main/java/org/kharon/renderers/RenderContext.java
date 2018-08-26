@@ -1,7 +1,7 @@
-package br.gov.pf.labld.kharon.renderers;
+package org.kharon.renderers;
 
-import br.gov.pf.labld.kharon.Graph;
-import br.gov.pf.labld.kharon.GraphPanel;
+import org.kharon.Graph;
+import org.kharon.GraphPanel;
 
 public class RenderContext {
 

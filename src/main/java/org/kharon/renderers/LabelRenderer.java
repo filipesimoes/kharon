@@ -1,9 +1,9 @@
-package br.gov.pf.labld.kharon.renderers;
+package org.kharon.renderers;
 
 import java.awt.Graphics;
 import java.awt.geom.Rectangle2D;
 
-import br.gov.pf.labld.kharon.Node;
+import org.kharon.Node;
 
 public interface LabelRenderer {
 

@@ -1,4 +1,4 @@
-package br.gov.pf.labld.kharon;
+package org.kharon;
 
 import java.awt.Color;
 import java.util.concurrent.atomic.AtomicInteger;

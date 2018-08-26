@@ -1,4 +1,4 @@
-package br.gov.pf.labld.kharon.sample;
+package org.kharon.sample;
 
 import java.awt.BorderLayout;
 import java.awt.Cursor;
@@ -16,13 +16,13 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 
-import br.gov.pf.labld.kharon.Edge;
-import br.gov.pf.labld.kharon.Graph;
-import br.gov.pf.labld.kharon.GraphPanel;
-import br.gov.pf.labld.kharon.Node;
-import br.gov.pf.labld.kharon.NodeListener;
-import br.gov.pf.labld.kharon.StageListener;
-import br.gov.pf.labld.kharon.renderers.Renderers;
+import org.kharon.Edge;
+import org.kharon.Graph;
+import org.kharon.GraphPanel;
+import org.kharon.Node;
+import org.kharon.NodeListener;
+import org.kharon.StageListener;
+import org.kharon.renderers.Renderers;
 
 public class Sample {
 

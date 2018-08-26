@@ -1,8 +1,8 @@
-package br.gov.pf.labld.kharon.renderers;
+package org.kharon.renderers;
 
 import java.awt.Graphics;
 
-import br.gov.pf.labld.kharon.Graph;
+import org.kharon.Graph;
 
 public interface GraphRenderer {
 

@@ -1,4 +1,4 @@
-package br.gov.pf.labld.kharon;
+package org.kharon;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -26,13 +26,13 @@ import java.util.Set;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
-import br.gov.pf.labld.kharon.renderers.EdgeRenderer;
-import br.gov.pf.labld.kharon.renderers.GraphRenderer;
-import br.gov.pf.labld.kharon.renderers.LabelRenderer;
-import br.gov.pf.labld.kharon.renderers.NodeRenderer;
-import br.gov.pf.labld.kharon.renderers.RenderContext;
-import br.gov.pf.labld.kharon.renderers.Renderers;
-import br.gov.pf.labld.kharon.renderers.SelectionRenderer;
+import org.kharon.renderers.EdgeRenderer;
+import org.kharon.renderers.GraphRenderer;
+import org.kharon.renderers.LabelRenderer;
+import org.kharon.renderers.NodeRenderer;
+import org.kharon.renderers.RenderContext;
+import org.kharon.renderers.Renderers;
+import org.kharon.renderers.SelectionRenderer;
 
 public class GraphPanel extends JComponent
     implements MouseListener, MouseWheelListener, MouseMotionListener, GraphListener {

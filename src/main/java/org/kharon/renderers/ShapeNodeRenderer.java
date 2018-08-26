@@ -1,4 +1,4 @@
-package br.gov.pf.labld.kharon.renderers;
+package org.kharon.renderers;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -8,8 +8,8 @@ import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 
-import br.gov.pf.labld.kharon.Graph;
-import br.gov.pf.labld.kharon.Node;
+import org.kharon.Graph;
+import org.kharon.Node;
 
 public abstract class ShapeNodeRenderer implements NodeRenderer {
 

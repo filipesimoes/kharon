@@ -1,11 +1,11 @@
-package br.gov.pf.labld.kharon.sample;
+package org.kharon.sample;
 
 import java.awt.Shape;
 import java.awt.geom.GeneralPath;
 
-import br.gov.pf.labld.kharon.Node;
-import br.gov.pf.labld.kharon.renderers.RenderContext;
-import br.gov.pf.labld.kharon.renderers.ShapeNodeRenderer;
+import org.kharon.Node;
+import org.kharon.renderers.RenderContext;
+import org.kharon.renderers.ShapeNodeRenderer;
 
 /**
  * This class has been generated using

@@ -1,4 +1,4 @@
-package br.gov.pf.labld.kharon.renderers;
+package org.kharon.renderers;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -7,9 +7,9 @@ import java.awt.Shape;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
 
-import br.gov.pf.labld.kharon.Graph;
-import br.gov.pf.labld.kharon.GraphSettings;
-import br.gov.pf.labld.kharon.NodeBoundingBox;
+import org.kharon.Graph;
+import org.kharon.GraphSettings;
+import org.kharon.NodeBoundingBox;
 
 public class DefaultSelectionRenderer implements SelectionRenderer {
 

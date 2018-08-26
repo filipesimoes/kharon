@@ -1,4 +1,4 @@
-package br.gov.pf.labld.kharon;
+package org.kharon;
 
 public enum StageMode {
 
