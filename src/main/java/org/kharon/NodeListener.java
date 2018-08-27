@@ -6,6 +6,10 @@ public interface NodeListener {
 
   void nodeClicked(Node node, MouseEvent e);
 
+  void nodePressed(Node node, MouseEvent e);
+
+  void nodeReleased(Node node, MouseEvent e);
+
   void nodeDragStarted(Node node, MouseEvent e);
 
   void nodeDragStopped(Node node, MouseEvent e);

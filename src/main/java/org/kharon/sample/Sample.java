@@ -68,14 +68,23 @@ public class Sample {
       @Override
       public void nodeClicked(Node node, MouseEvent e) {
         System.out.println("Node " + node.getId() + " clicked.");
-        graphPanel.selectNode(node.getId());
+        boolean selected = graphPanel.isNodeSelected(node);
+        boolean keepSelection = e.isControlDown() || e.isShiftDown();
+        if (!selected) {
+          graphPanel.selectNode(node.getId(), keepSelection);
+        } else if (keepSelection) {
+          graphPanel.deselectNode(node.getId());
+        } else {
+          graphPanel.selectNode(node.getId());
+        }
       }
 
       @Override
       public void nodeDragStarted(Node node, MouseEvent e) {
         System.out.println("Node " + node.getId() + " drag started.");
         graphPanel.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
-        graphPanel.selectNode(node.getId());
+        boolean keepSelection = graphPanel.isNodeSelected(node);
+        graphPanel.selectNode(node.getId(), keepSelection);
       }
 
       @Override
@@ -87,6 +96,16 @@ public class Sample {
       @Override
       public void nodeDragged(Node node, MouseEvent e) {
         System.out.println("Node " + node.getId() + " dragged.");
+      }
+
+      @Override
+      public void nodePressed(Node node, MouseEvent e) {
+        System.out.println("Node " + node.getId() + " pressed.");
+      }
+
+      @Override
+      public void nodeReleased(Node node, MouseEvent e) {
+        System.out.println("Node " + node.getId() + " released.");
       }
     });
 

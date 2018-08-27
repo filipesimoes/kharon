@@ -43,6 +43,7 @@ public class GraphPanel extends JComponent
 
   private Graph graph;
   private StageMode stageMode = StageMode.PAN;
+  private NodeDragMode nodeDragMode = NodeDragMode.SELECTION;
   private RenderContext renderContext;
 
   private List<NodeListener> nodeListeners = new ArrayList<>();
@@ -50,15 +51,13 @@ public class GraphPanel extends JComponent
 
   private boolean showBoundingBoxes = false;
 
-  private boolean nodeDragEnabled = true;
-
   private boolean mouseWheelZoomEnabled = true;
   private double scale = 1d / 5d;
   private static final double MIN_ZOOM = 1d / 4d;
   private static final double MAX_ZOOM = 5d;
 
   private boolean isDragging = false;
-  private Node draggedNode = null;
+  private Node nodeUnderMouse = null;
 
   private AffineTransform transform = new AffineTransform();
   private AffineTransform inverseTransform = new AffineTransform();
@@ -177,9 +176,8 @@ public class GraphPanel extends JComponent
   @Override
   public void mouseClicked(MouseEvent e) {
     if (this.isEnabled()) {
-      Node nodeClicked = getNodeUnderMouse(e);
-      if (nodeClicked != null) {
-        notifyNodeClicked(nodeClicked, e);
+      if (this.nodeUnderMouse != null) {
+        notifyNodeClicked(this.nodeUnderMouse, e);
       } else {
         notifyStageClicked(e);
       }
@@ -219,6 +217,18 @@ public class GraphPanel extends JComponent
   private void notifyNodeClicked(Node node, MouseEvent e) {
     for (NodeListener listener : this.nodeListeners) {
       listener.nodeClicked(node, e);
+    }
+  }
+
+  private void notifyNodePressed(Node node, MouseEvent e) {
+    for (NodeListener listener : this.nodeListeners) {
+      listener.nodePressed(node, e);
+    }
+  }
+
+  private void notifyNodeReleased(Node node, MouseEvent e) {
+    for (NodeListener listener : this.nodeListeners) {
+      listener.nodeReleased(node, e);
     }
   }
 
@@ -269,13 +279,24 @@ public class GraphPanel extends JComponent
 
   @Override
   public void mousePressed(MouseEvent e) {
-
+    if (this.isEnabled()) {
+      this.nodeUnderMouse = getNodeUnderMouse(e);
+      if (this.nodeUnderMouse != null) {
+        notifyNodePressed(this.nodeUnderMouse, e);
+      }
+    }
   }
 
   @Override
   public void mouseReleased(MouseEvent e) {
-    stopDrag(e);
-    repaint();
+    if (this.isEnabled()) {
+      stopDrag(e);
+      this.nodeUnderMouse = getNodeUnderMouse(e);
+      if (this.nodeUnderMouse != null) {
+        notifyNodeReleased(this.nodeUnderMouse, e);
+      }
+      repaint();
+    }
   }
 
   @Override
@@ -285,8 +306,10 @@ public class GraphPanel extends JComponent
 
   @Override
   public void mouseExited(MouseEvent e) {
-    stopDrag(e);
-    repaint();
+    if (this.isEnabled()) {
+      stopDrag(e);
+      repaint();
+    }
   }
 
   @Override
@@ -339,8 +362,12 @@ public class GraphPanel extends JComponent
       if (!isDragging) {
         startDrag(evt);
       }
-      if (draggedNode != null && this.nodeDragEnabled) {
-        dragNode(evt);
+      if (nodeUnderMouse != null) {
+        if (this.nodeDragMode == NodeDragMode.CURRENT) {
+          dragNode(evt);
+        } else {
+          dragSelectedNodes(evt);
+        }
         repaint();
       } else if (this.stageMode == StageMode.PAN) {
         dragStage(evt);
@@ -387,29 +414,52 @@ public class GraphPanel extends JComponent
     notifyStageDragged(evt);
   }
 
+  private void dragSelectedNodes(MouseEvent evt) {
+    int oldX = this.nodeUnderMouse.getX();
+    int oldY = this.nodeUnderMouse.getY();
+    dragNode(evt);
+
+    Set<String> selected = new HashSet<>(this.selectedNodes);
+    selected.remove(this.nodeUnderMouse.getId());
+    Set<Node> nodes = this.graph.getNodes(selected);
+
+    int offsetX = this.nodeUnderMouse.getX() - oldX;
+    int offsetY = this.nodeUnderMouse.getY() - oldY;
+    for (Node node : nodes) {
+      int x = node.getX() + offsetX;
+      int y = node.getY() + offsetY;
+
+      node.setX(x);
+      node.setY(y);
+
+      notifyNodeDragged(node, evt);
+    }
+
+  }
+
   private void dragNode(MouseEvent evt) {
     Point2D evtLocation = invert(evt.getPoint());
     int x = (int) (evtLocation.getX() - this.nodeDragOffsetX);
     int y = (int) (evtLocation.getY() - this.nodeDragOffsetY);
 
-    draggedNode.setX(x);
-    draggedNode.setY(y);
+    nodeUnderMouse.setX(x);
+    nodeUnderMouse.setY(y);
 
-    notifyNodeDragged(draggedNode, evt);
+    notifyNodeDragged(nodeUnderMouse, evt);
   }
 
   private void startDrag(MouseEvent e) {
     this.isDragging = true;
-    this.draggedNode = getNodeUnderMouse(e);
+    this.nodeUnderMouse = getNodeUnderMouse(e);
 
     Point2D startDrag = invert(e.getPoint());
     this.startDragX = (int) startDrag.getX();
     this.startDragY = (int) startDrag.getY();
 
-    if (draggedNode != null) {
-      this.nodeDragOffsetX = this.startDragX - draggedNode.getX();
-      this.nodeDragOffsetY = this.startDragY - draggedNode.getY();
-      notifyNodeDragStarted(draggedNode, e);
+    if (nodeUnderMouse != null) {
+      this.nodeDragOffsetX = this.startDragX - nodeUnderMouse.getX();
+      this.nodeDragOffsetY = this.startDragY - nodeUnderMouse.getY();
+      notifyNodeDragStarted(nodeUnderMouse, e);
     } else {
       notifyStageDragStarted(e);
     }
@@ -422,13 +472,13 @@ public class GraphPanel extends JComponent
         applyCurrentSelection(e);
       }
 
-      if (draggedNode != null) {
-        notifyNodeDragStopped(draggedNode, e);
+      if (nodeUnderMouse != null) {
+        notifyNodeDragStopped(nodeUnderMouse, e);
       } else {
         notifyStageDragStopped(e);
       }
       this.isDragging = false;
-      this.draggedNode = null;
+      this.nodeUnderMouse = null;
       this.selectionRectangle = null;
     }
   }
@@ -452,14 +502,6 @@ public class GraphPanel extends JComponent
   @Override
   public void mouseMoved(MouseEvent e) {
 
-  }
-
-  public boolean isNodeDragEnabled() {
-    return nodeDragEnabled;
-  }
-
-  public void setNodeDragEnabled(boolean nodeDragEnabled) {
-    this.nodeDragEnabled = nodeDragEnabled;
   }
 
   public boolean isShowBoundingBoxes() {
@@ -512,6 +554,11 @@ public class GraphPanel extends JComponent
     repaint();
   }
 
+  public void deselectNode(String id) {
+    this.selectedNodes.remove(id);
+    repaint();
+  }
+
   public void deselectAll() {
     this.selectedNodes.clear();
     repaint();
@@ -549,6 +596,14 @@ public class GraphPanel extends JComponent
 
   public void setStageMode(StageMode stageMode) {
     this.stageMode = stageMode;
+  }
+
+  public NodeDragMode getNodeDragMode() {
+    return nodeDragMode;
+  }
+
+  public void setNodeDragMode(NodeDragMode nodeDragMode) {
+    this.nodeDragMode = nodeDragMode;
   }
 
 }
