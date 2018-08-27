@@ -1,5 +1,6 @@
 package org.kharon;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -14,6 +15,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.Rectangle2D.Double;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -40,6 +42,7 @@ public class GraphPanel extends JComponent
   private static final long serialVersionUID = 3827345534868023684L;
 
   private Graph graph;
+  private StageMode stageMode = StageMode.PAN;
   private RenderContext renderContext;
 
   private List<NodeListener> nodeListeners = new ArrayList<>();
@@ -48,7 +51,6 @@ public class GraphPanel extends JComponent
   private boolean showBoundingBoxes = false;
 
   private boolean nodeDragEnabled = true;
-  private boolean stageDragEnabled = true;
 
   private boolean mouseWheelZoomEnabled = true;
   private double scale = 1d / 5d;
@@ -69,6 +71,8 @@ public class GraphPanel extends JComponent
 
   private Set<String> selectedNodes = new HashSet<>();
   private Map<String, NodeBoundingBox> boxesIndex = new HashMap<>();
+
+  private Double selectionRectangle;
 
   public GraphPanel(Graph graph) {
     super();
@@ -138,6 +142,13 @@ public class GraphPanel extends JComponent
       NodeBoundingBox nodeBoundingBox = this.boxesIndex.get(selectedId);
       SelectionRenderer renderer = Renderers.getSelectionRenderer(node.getSelectionType());
       renderer.render(g2d, nodeBoundingBox, renderContext);
+    }
+
+    if (this.selectionRectangle != null) {
+      Color oldColor = g2d.getColor();
+      g2d.setColor(this.graph.getSettings().getSelectionColor());
+      g2d.draw(this.selectionRectangle);
+      g2d.setColor(oldColor);
     }
 
     g2d.setTransform(oldTransform);
@@ -243,6 +254,19 @@ public class GraphPanel extends JComponent
     return null;
   }
 
+  private void applyCurrentSelection(MouseEvent e) {
+    if (!e.isControlDown() && !e.isShiftDown()) {
+      this.selectedNodes.clear();
+    }
+    for (Entry<String, NodeBoundingBox> entry : boxesIndex.entrySet()) {
+      NodeBoundingBox box = entry.getValue();
+      if (box.intersects(selectionRectangle)) {
+        String id = entry.getKey();
+        this.selectedNodes.add(id);
+      }
+    }
+  }
+
   @Override
   public void mousePressed(MouseEvent e) {
 
@@ -318,10 +342,29 @@ public class GraphPanel extends JComponent
       if (draggedNode != null && this.nodeDragEnabled) {
         dragNode(evt);
         repaint();
-      } else if (this.stageDragEnabled) {
+      } else if (this.stageMode == StageMode.PAN) {
         dragStage(evt);
         repaint();
+      } else if (this.stageMode == StageMode.SELECTION) {
+        updateSelection(evt);
+        repaint();
       }
+    }
+  }
+
+  private void updateSelection(MouseEvent evt) {
+    Point2D evtLocation = invert(evt.getPoint());
+    double x = Math.min(this.startDragX, evtLocation.getX());
+    double y = Math.min(this.startDragY, evtLocation.getY());
+    double width = Math.abs(this.startDragX - evtLocation.getX());
+    double height = Math.abs(this.startDragY - evtLocation.getY());
+    if (selectionRectangle == null) {
+      this.selectionRectangle = new Rectangle2D.Double(x, y, width, height);
+    } else {
+      this.selectionRectangle.x = x;
+      this.selectionRectangle.y = y;
+      this.selectionRectangle.width = width;
+      this.selectionRectangle.height = height;
     }
   }
 
@@ -375,6 +418,10 @@ public class GraphPanel extends JComponent
 
   private void stopDrag(MouseEvent e) {
     if (this.isDragging) {
+      if (this.selectionRectangle != null && this.stageMode == StageMode.SELECTION) {
+        applyCurrentSelection(e);
+      }
+
       if (draggedNode != null) {
         notifyNodeDragStopped(draggedNode, e);
       } else {
@@ -382,6 +429,7 @@ public class GraphPanel extends JComponent
       }
       this.isDragging = false;
       this.draggedNode = null;
+      this.selectionRectangle = null;
     }
   }
 
@@ -412,14 +460,6 @@ public class GraphPanel extends JComponent
 
   public void setNodeDragEnabled(boolean nodeDragEnabled) {
     this.nodeDragEnabled = nodeDragEnabled;
-  }
-
-  public boolean isStageDragEnabled() {
-    return stageDragEnabled;
-  }
-
-  public void setStageDragEnabled(boolean stageDragEnabled) {
-    this.stageDragEnabled = stageDragEnabled;
   }
 
   public boolean isShowBoundingBoxes() {
@@ -501,6 +541,14 @@ public class GraphPanel extends JComponent
   @Override
   public void edgeRemoved(Edge edge) {
 
+  }
+
+  public StageMode getStageMode() {
+    return stageMode;
+  }
+
+  public void setStageMode(StageMode stageMode) {
+    this.stageMode = stageMode;
   }
 
 }

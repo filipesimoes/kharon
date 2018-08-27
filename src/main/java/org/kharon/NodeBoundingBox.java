@@ -1,6 +1,7 @@
 package org.kharon;
 
 import java.awt.Shape;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +16,15 @@ public class NodeBoundingBox {
   public boolean contains(double x, double y) {
     for (Shape box : boxes) {
       if (box.contains(x, y)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean intersects(Rectangle2D rect) {
+    for (Shape box : boxes) {
+      if (box.intersects(rect)) {
         return true;
       }
     }

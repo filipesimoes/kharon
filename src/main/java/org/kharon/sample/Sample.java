@@ -22,6 +22,7 @@ import org.kharon.GraphPanel;
 import org.kharon.Node;
 import org.kharon.NodeListener;
 import org.kharon.StageListener;
+import org.kharon.StageMode;
 import org.kharon.renderers.Renderers;
 
 public class Sample {
@@ -104,11 +105,19 @@ public class Sample {
       @Override
       public void stageDragStopped(MouseEvent e) {
         System.out.println("Stage drag stopped.");
+        graphPanel.setCursor(Cursor.getDefaultCursor());
+        graphPanel.setStageMode(StageMode.PAN);
       }
 
       @Override
       public void stageDragStarted(MouseEvent e) {
         System.out.println("Stage drag started.");
+        if (e.isControlDown() || e.isShiftDown()) {
+          graphPanel.setStageMode(StageMode.SELECTION);
+        } else {
+          graphPanel.setStageMode(StageMode.PAN);
+          graphPanel.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+        }
       }
 
       @Override

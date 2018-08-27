@@ -9,6 +9,8 @@ public class GraphSettings {
   private Color defaultLabelColor = Color.blue;
   private Color defaultSelectionColor = Color.blue;
 
+  private Color selectionColor = Color.blue;
+
   public Color getDefaultEdgeColor() {
     return defaultEdgeColor;
   }
@@ -39,6 +41,14 @@ public class GraphSettings {
 
   public void setDefaultSelectionColor(Color defaultSelectionColor) {
     this.defaultSelectionColor = defaultSelectionColor;
+  }
+
+  public Color getSelectionColor() {
+    return selectionColor;
+  }
+
+  public void setSelectionColor(Color selectionColor) {
+    this.selectionColor = selectionColor;
   }
 
 }
