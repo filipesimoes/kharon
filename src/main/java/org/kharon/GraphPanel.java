@@ -101,15 +101,18 @@ public class GraphPanel extends JComponent
     GraphRenderer graphRenderer = Renderers.getGraphRenderer(this.graph.getType());
     graphRenderer.render(g, this.graph);
 
+    Rectangle clipBounds = g2d.getClipBounds();
+
     Collection<Edge> edges = graph.getEdges();
     for (Edge edge : edges) {
       EdgeRenderer renderer = Renderers.getEdgeRenderer(edge.getType());
-      renderer.render(g, edge, renderContext);
+      Rectangle2D bounds = renderer.determineBounds(g2d, edge, renderContext);
+      if (bounds != null && clipBounds.intersects(bounds)) {
+        renderer.render(g, edge, renderContext, bounds);
+      }
     }
 
     boxesIndex.clear();
-
-    Rectangle clipBounds = g2d.getClipBounds();
 
     Collection<Node> nodes = graph.getNodes();
     for (Node node : nodes) {
@@ -136,8 +139,10 @@ public class GraphPanel extends JComponent
 
     if (this.showBoundingBoxes) {
       for (NodeBoundingBox boundingBox : this.boxesIndex.values()) {
-        for (Shape box : boundingBox.getBoxes()) {
-          g2d.draw(box);
+        if (boundingBox.intersects(clipBounds)) {
+          for (Shape box : boundingBox.getBoxes()) {
+            g2d.draw(box);
+          }
         }
       }
     }
@@ -145,7 +150,7 @@ public class GraphPanel extends JComponent
     for (String selectedId : this.selectedNodes) {
       Node node = this.graph.getNode(selectedId);
       NodeBoundingBox nodeBoundingBox = this.boxesIndex.get(selectedId);
-      if (nodeBoundingBox.intersects(clipBounds)) {
+      if (nodeBoundingBox != null && nodeBoundingBox.intersects(clipBounds)) {
         SelectionRenderer renderer = Renderers.getSelectionRenderer(node.getSelectionType());
         renderer.render(g2d, nodeBoundingBox, renderContext);
       }

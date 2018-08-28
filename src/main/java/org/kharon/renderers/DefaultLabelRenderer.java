@@ -23,7 +23,7 @@ public class DefaultLabelRenderer implements LabelRenderer {
       }
       g.setColor(color);
 
-      g.drawString(label, (int) bounds.getX(), (int) bounds.getY());
+      g.drawString(label, (int) bounds.getX(), (int) (bounds.getY() + bounds.getHeight()));
 
       g.setColor(oldColor);
     }
