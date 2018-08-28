@@ -14,10 +14,9 @@ import org.kharon.Node;
 public abstract class ShapeNodeRenderer implements NodeRenderer {
 
   @Override
-  public Rectangle2D render(Graphics g, Node node, RenderContext renderContext) {
+  public void render(Graphics g, Node node, RenderContext renderContext, Rectangle2D bounds) {
     int x = node.getX();
     int y = node.getY();
-    int size = node.getSize();
 
     Graphics2D g2d = (Graphics2D) g;
 
@@ -27,7 +26,6 @@ public abstract class ShapeNodeRenderer implements NodeRenderer {
     paint(g2d, node, renderContext);
 
     g2d.setTransform(oldTransform);
-    return new Rectangle2D.Double(x, y, size, size);
   }
 
   public abstract Shape drawShape(Node node, RenderContext renderContext);
@@ -55,6 +53,14 @@ public abstract class ShapeNodeRenderer implements NodeRenderer {
     g.setPaint(oldPaint);
 
     return renderContext.getGraphPanel().transform(shape);
+  }
+
+  @Override
+  public Rectangle2D determineBounds(Graphics g, Node node, RenderContext renderContext) {
+    int x = node.getX();
+    int y = node.getY();
+    int size = node.getSize();
+    return new Rectangle2D.Double(x, y, size, size);
   }
 
 }

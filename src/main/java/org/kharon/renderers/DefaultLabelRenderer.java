@@ -11,11 +11,28 @@ import org.kharon.Node;
 public class DefaultLabelRenderer implements LabelRenderer {
 
   @Override
-  public Rectangle2D render(Graphics g, Node node, RenderContext renderContext) {
+  public void render(Graphics g, Node node, RenderContext renderContext, Rectangle2D bounds) {
     String label = node.getLabel();
     if (label != null) {
       Color oldColor = g.getColor();
 
+      Color color = node.getColor();
+      if (color == null) {
+        Graph graph = renderContext.getGraph();
+        color = graph.getSettings().getDefaultLabelColor();
+      }
+      g.setColor(color);
+
+      g.drawString(label, (int) bounds.getX(), (int) bounds.getY());
+
+      g.setColor(oldColor);
+    }
+  }
+
+  @Override
+  public Rectangle2D determineBounds(Graphics g, Node node, RenderContext renderContext) {
+    String label = node.getLabel();
+    if (label != null) {
       FontMetrics fontMetrics = g.getFontMetrics();
 
       int nodeX = node.getX();
@@ -26,17 +43,6 @@ public class DefaultLabelRenderer implements LabelRenderer {
 
       int labelX = nodeX + (size / 2) - (labelWidth / 2);
       int labelY = nodeY + (size / 2) + labelHeight + (size / 2);
-
-      Color color = node.getColor();
-      if (color == null) {
-        Graph graph = renderContext.getGraph();
-        color = graph.getSettings().getDefaultLabelColor();
-      }
-      g.setColor(color);
-
-      g.drawString(label, labelX, labelY);
-
-      g.setColor(oldColor);
 
       return new Rectangle2D.Double(labelX, labelY - labelHeight, labelWidth, labelHeight);
     } else {

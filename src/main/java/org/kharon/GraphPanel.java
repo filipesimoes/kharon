@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.event.MouseEvent;
@@ -107,20 +108,25 @@ public class GraphPanel extends JComponent
     }
 
     boxesIndex.clear();
+
+    Rectangle clipBounds = g2d.getClipBounds();
+
     Collection<Node> nodes = graph.getNodes();
     for (Node node : nodes) {
       NodeBoundingBox box = new NodeBoundingBox();
 
       NodeRenderer renderer = Renderers.getNodeRenderer(node.getType());
-      Rectangle2D boudingBox = renderer.render(g, node, renderContext);
-      if (boudingBox != null) {
-        box.addBox(boudingBox);
+      Rectangle2D nodeBounds = renderer.determineBounds(g2d, node, renderContext);
+      if (clipBounds != null && clipBounds.intersects(nodeBounds)) {
+        renderer.render(g, node, renderContext, nodeBounds);
+        box.addBox(nodeBounds);
       }
 
       LabelRenderer labelRenderer = Renderers.getLabelRenderer(node.getLabelType());
-      Rectangle2D labelBoundingBox = labelRenderer.render(g2d, node, renderContext);
-      if (labelBoundingBox != null) {
-        box.addBox(labelBoundingBox);
+      Rectangle2D labelBounds = labelRenderer.determineBounds(g2d, node, renderContext);
+      if (labelBounds != null && clipBounds.intersects(labelBounds)) {
+        labelRenderer.render(g2d, node, renderContext, labelBounds);
+        box.addBox(labelBounds);
       }
 
       if (!box.getBoxes().isEmpty()) {
@@ -139,8 +145,10 @@ public class GraphPanel extends JComponent
     for (String selectedId : this.selectedNodes) {
       Node node = this.graph.getNode(selectedId);
       NodeBoundingBox nodeBoundingBox = this.boxesIndex.get(selectedId);
-      SelectionRenderer renderer = Renderers.getSelectionRenderer(node.getSelectionType());
-      renderer.render(g2d, nodeBoundingBox, renderContext);
+      if (nodeBoundingBox.intersects(clipBounds)) {
+        SelectionRenderer renderer = Renderers.getSelectionRenderer(node.getSelectionType());
+        renderer.render(g2d, nodeBoundingBox, renderContext);
+      }
     }
 
     if (this.selectionRectangle != null) {

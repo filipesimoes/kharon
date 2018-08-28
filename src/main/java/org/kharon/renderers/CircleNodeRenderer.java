@@ -11,8 +11,7 @@ import org.kharon.Node;
 public class CircleNodeRenderer implements NodeRenderer {
 
   @Override
-  public Rectangle2D render(Graphics g, Node node, RenderContext renderContext) {
-
+  public void render(Graphics g, Node node, RenderContext renderContext, Rectangle2D bounds) {
     Color oldColor = g.getColor();
 
     Graphics2D g2 = (Graphics2D) g;
@@ -29,6 +28,13 @@ public class CircleNodeRenderer implements NodeRenderer {
     g2.fillOval(x, y, size, size);
 
     g.setColor(oldColor);
+  }
+
+  @Override
+  public Rectangle2D determineBounds(Graphics g, Node node, RenderContext renderContext) {
+    int x = node.getX();
+    int y = node.getY();
+    int size = node.getSize();
     return new Rectangle2D.Double(x, y, size, size);
   }
 
