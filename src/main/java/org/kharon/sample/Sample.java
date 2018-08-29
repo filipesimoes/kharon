@@ -37,7 +37,7 @@ public class Sample {
 
     Graph graph = new Graph();
 
-    int totalNodes = 200;
+    int totalNodes = 100;
     Node[] nodes = new Node[totalNodes];
 
     for (int i = 0; i < totalNodes; i++) {

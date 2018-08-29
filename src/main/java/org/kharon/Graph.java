@@ -53,6 +53,17 @@ public class Graph {
     return edgeIndex.values();
   }
 
+  public Set<Edge> getNodesEdges(Collection<String> nodeIds) {
+    Set<Edge> result = new HashSet<>();
+
+    for (String nodeId : nodeIds) {
+      NodeHolder nodeHolder = this.nodeIndex.get(nodeId);
+      result.addAll(nodeHolder.getEdges());
+    }
+
+    return result;
+  }
+
   public void addNode(Node node) {
     this.nodeIndex.put(node.getId(), new NodeHolder(node));
     notifyNodeAdded(node);

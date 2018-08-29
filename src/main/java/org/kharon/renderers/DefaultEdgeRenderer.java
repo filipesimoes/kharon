@@ -2,6 +2,7 @@ package org.kharon.renderers;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 
 import org.kharon.Edge;
@@ -41,7 +42,7 @@ public class DefaultEdgeRenderer implements EdgeRenderer {
   }
 
   @Override
-  public Rectangle2D determineBounds(Graphics g, Edge edge, RenderContext renderContext) {
+  public Rectangle2D determineBounds(Graphics2D g2d, Edge edge, RenderContext renderContext) {
     // TODO Create a EdgeHolder to hold a direct reference to the node.
     String sourceId = edge.getSource();
     String targetId = edge.getTarget();

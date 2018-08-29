@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -41,6 +42,8 @@ public class GraphPanel extends JComponent
     implements MouseListener, MouseWheelListener, MouseMotionListener, GraphListener {
 
   private static final long serialVersionUID = 3827345534868023684L;
+
+//  private static final Logger LOGGER = Logger.getLogger(GraphPanel.class.getSimpleName());
 
   private Graph graph;
   private StageMode stageMode = StageMode.PAN;
@@ -72,6 +75,9 @@ public class GraphPanel extends JComponent
   private Set<String> selectedNodes = new HashSet<>();
   private Map<String, NodeBoundingBox> boxesIndex = new HashMap<>();
 
+  private Set<String> idleNodes = new HashSet<>();
+  private Set<String> liveNodes = new HashSet<>();
+
   private Double selectionRectangle;
 
   public GraphPanel(Graph graph) {
@@ -83,68 +89,32 @@ public class GraphPanel extends JComponent
     this.addMouseListener(this);
 
     this.graph.addListener(this);
+
+    this.idleNodes.addAll(this.graph.getIds());
   }
 
   @Override
   protected void paintComponent(Graphics g) {
-    Graphics2D g2d = (Graphics2D) g;
+    Graphics2D liveGraphics = (Graphics2D) g;
 
-    RenderingHints rh = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g2d.setRenderingHints(rh);
+    Rectangle clipBounds = liveGraphics.getClipBounds();
 
-    AffineTransform oldTransform = g2d.getTransform();
+    AffineTransform oldTransform = liveGraphics.getTransform();
     AffineTransform currentTransformation = (AffineTransform) oldTransform.clone();
     currentTransformation.concatenate(this.transform);
+    liveGraphics.setTransform(currentTransformation);
 
-    g2d.setTransform(currentTransformation);
+    RenderingHints rh = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    liveGraphics.setRenderingHints(rh);
 
     GraphRenderer graphRenderer = Renderers.getGraphRenderer(this.graph.getType());
-    graphRenderer.render(g, this.graph);
+    graphRenderer.render(liveGraphics, this.graph);
 
-    Rectangle clipBounds = g2d.getClipBounds();
-
-    Collection<Edge> edges = graph.getEdges();
-    for (Edge edge : edges) {
-      EdgeRenderer renderer = Renderers.getEdgeRenderer(edge.getType());
-      Rectangle2D bounds = renderer.determineBounds(g2d, edge, renderContext);
-      if (bounds != null && clipBounds.intersects(bounds)) {
-        renderer.render(g, edge, renderContext, bounds);
-      }
-    }
-
-    boxesIndex.clear();
-
-    Collection<Node> nodes = graph.getNodes();
-    for (Node node : nodes) {
-      NodeBoundingBox box = new NodeBoundingBox();
-
-      NodeRenderer renderer = Renderers.getNodeRenderer(node.getType());
-      Rectangle2D nodeBounds = renderer.determineBounds(g2d, node, renderContext);
-      if (clipBounds != null && clipBounds.intersects(nodeBounds)) {
-        renderer.render(g, node, renderContext, nodeBounds);
-        box.addBox(nodeBounds);
-      }
-
-      LabelRenderer labelRenderer = Renderers.getLabelRenderer(node.getLabelType());
-      Rectangle2D labelBounds = labelRenderer.determineBounds(g2d, node, renderContext);
-      if (labelBounds != null && clipBounds.intersects(labelBounds)) {
-        labelRenderer.render(g2d, node, renderContext, labelBounds);
-        box.addBox(labelBounds);
-      }
-
-      if (!box.getBoxes().isEmpty()) {
-        boxesIndex.put(node.getId(), box);
-      }
-    }
+    paintEdges(liveGraphics, clipBounds, graph.getEdges());
+    paintNodes(liveGraphics, clipBounds, graph.getNodes());
 
     if (this.showBoundingBoxes) {
-      for (NodeBoundingBox boundingBox : this.boxesIndex.values()) {
-        if (boundingBox.intersects(clipBounds)) {
-          for (Shape box : boundingBox.getBoxes()) {
-            g2d.draw(box);
-          }
-        }
-      }
+      paintBoundingBoxes(liveGraphics, clipBounds);
     }
 
     for (String selectedId : this.selectedNodes) {
@@ -152,18 +122,65 @@ public class GraphPanel extends JComponent
       NodeBoundingBox nodeBoundingBox = this.boxesIndex.get(selectedId);
       if (nodeBoundingBox != null && nodeBoundingBox.intersects(clipBounds)) {
         SelectionRenderer renderer = Renderers.getSelectionRenderer(node.getSelectionType());
-        renderer.render(g2d, nodeBoundingBox, renderContext);
+        renderer.render(liveGraphics, nodeBoundingBox, renderContext);
       }
     }
 
     if (this.selectionRectangle != null) {
-      Color oldColor = g2d.getColor();
-      g2d.setColor(this.graph.getSettings().getSelectionColor());
-      g2d.draw(this.selectionRectangle);
-      g2d.setColor(oldColor);
+      paintSelectionBox(liveGraphics);
     }
+    liveGraphics.setTransform(oldTransform);
+  }
 
-    g2d.setTransform(oldTransform);
+  private void paintSelectionBox(Graphics2D liveGraphics) {
+    Color oldColor = liveGraphics.getColor();
+    liveGraphics.setColor(this.graph.getSettings().getSelectionColor());
+    liveGraphics.draw(this.selectionRectangle);
+    liveGraphics.setColor(oldColor);
+  }
+
+  private void paintBoundingBoxes(Graphics2D bufferGraphics, Rectangle clipBounds) {
+    for (NodeBoundingBox boundingBox : this.boxesIndex.values()) {
+      if (boundingBox.intersects(clipBounds)) {
+        for (Shape box : boundingBox.getBoxes()) {
+          bufferGraphics.draw(box);
+        }
+      }
+    }
+  }
+
+  private void paintNodes(Graphics2D bufferGraphics, Rectangle clipBounds, Collection<Node> nodes) {
+    for (Node node : nodes) {
+      NodeBoundingBox box = new NodeBoundingBox();
+
+      NodeRenderer renderer = Renderers.getNodeRenderer(node.getType());
+      Rectangle2D nodeBounds = renderer.determineBounds(bufferGraphics, node, renderContext);
+      if (clipBounds != null && clipBounds.intersects(nodeBounds)) {
+        renderer.render(bufferGraphics, node, renderContext, nodeBounds);
+        box.addBox(nodeBounds);
+      }
+
+      LabelRenderer labelRenderer = Renderers.getLabelRenderer(node.getLabelType());
+      Rectangle2D labelBounds = labelRenderer.determineBounds(bufferGraphics, node, renderContext);
+      if (labelBounds != null && clipBounds.intersects(labelBounds)) {
+        labelRenderer.render(bufferGraphics, node, renderContext, labelBounds);
+        box.addBox(labelBounds);
+      }
+
+      if (!box.getBoxes().isEmpty()) {
+        boxesIndex.put(node.getId(), box);
+      }
+    }
+  }
+
+  private void paintEdges(Graphics2D g2d, Rectangle clipBounds, Collection<Edge> edges) {
+    for (Edge edge : edges) {
+      EdgeRenderer renderer = Renderers.getEdgeRenderer(edge.getType());
+      Rectangle2D bounds = renderer.determineBounds(g2d, edge, renderContext);
+      if (bounds != null && clipBounds.intersects(bounds)) {
+        renderer.render(g2d, edge, renderContext, bounds);
+      }
+    }
   }
 
   public Graph getGraph() {
@@ -472,6 +489,10 @@ public class GraphPanel extends JComponent
     if (nodeUnderMouse != null) {
       this.nodeDragOffsetX = this.startDragX - nodeUnderMouse.getX();
       this.nodeDragOffsetY = this.startDragY - nodeUnderMouse.getY();
+
+      this.idleNodes.remove(nodeUnderMouse.getId());
+      this.liveNodes.add(nodeUnderMouse.getId());
+
       notifyNodeDragStarted(nodeUnderMouse, e);
     } else {
       notifyStageDragStarted(e);
@@ -487,6 +508,9 @@ public class GraphPanel extends JComponent
 
       if (nodeUnderMouse != null) {
         notifyNodeDragStopped(nodeUnderMouse, e);
+        this.liveNodes.remove(nodeUnderMouse.getId());
+        this.idleNodes.add(nodeUnderMouse.getId());
+
       } else {
         notifyStageDragStopped(e);
       }
@@ -584,7 +608,7 @@ public class GraphPanel extends JComponent
 
   @Override
   public void nodeAdded(Node node) {
-
+    this.idleNodes.add(node.getId());
   }
 
   @Override
