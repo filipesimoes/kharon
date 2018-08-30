@@ -1,11 +1,13 @@
 package org.kharon.renderers;
 
 import java.awt.Graphics;
+import java.awt.Shape;
+import java.util.Collection;
 
-import org.kharon.NodeBoundingBox;
+import org.kharon.GraphShape;
 
 public interface SelectionRenderer {
 
-  void render(Graphics g, NodeBoundingBox box, RenderContext renderContext);
+  GraphShape render(Graphics g, Collection<Shape> shapes, RenderContext renderContext);
 
 }

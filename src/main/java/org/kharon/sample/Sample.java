@@ -46,6 +46,7 @@ public class Sample {
       node.setX((int) (Math.random() * 1200));
       node.setY((int) (Math.random() * 700));
       node.setType("bug");
+      node.setSize(30);
       graph.addNode(node);
       nodes[i] = node;
     }
@@ -171,7 +172,7 @@ public class Sample {
     KeyStroke delete = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
     inputMap.put(delete, "RemoveSelected");
 
-    // graphPanel.setShowBoundingBoxes(true);
+     graphPanel.setShowBoundingBoxes(true);
 
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(graphPanel);

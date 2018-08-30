@@ -2,43 +2,39 @@ package org.kharon.renderers;
 
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.geom.Rectangle2D;
-import java.util.List;
+import java.util.Collection;
 
 import org.kharon.Graph;
 import org.kharon.GraphSettings;
-import org.kharon.NodeBoundingBox;
+import org.kharon.GraphShape;
 
 public class DefaultSelectionRenderer implements SelectionRenderer {
 
   private static final double GAP = 0.2;
 
   @Override
-  public void render(Graphics g, NodeBoundingBox box, RenderContext renderContext) {
-    Color oldColor = g.getColor();
+  public GraphShape render(Graphics g, Collection<Shape> shapes, RenderContext renderContext) {
     Graph graph = renderContext.getGraph();
     GraphSettings settings = graph.getSettings();
     Color color = settings.getDefaultSelectionColor();
-    g.setColor(color);
 
-    Graphics2D g2d = (Graphics2D) g;
-    g2d.draw(getUnionBox(box));
-
-    g.setColor(oldColor);
+    Rectangle2D shape = getUnionBox(shapes);
+    GraphShape graphShape = new GraphShape(shape);
+    graphShape.setStrokePaint(color);
+    return graphShape;
   }
 
-  protected Rectangle2D getUnionBox(NodeBoundingBox box) {
-    List<Shape> boxes = box.getBoxes();
+  protected Rectangle2D getUnionBox(Collection<Shape> shapes) {
     double minX = Double.POSITIVE_INFINITY;
     double minY = Double.POSITIVE_INFINITY;
 
     double maxX = Double.NEGATIVE_INFINITY;
     double maxY = Double.NEGATIVE_INFINITY;
 
-    for (Shape boundingBox : boxes) {
-      Rectangle2D bounds = boundingBox.getBounds2D();
+    for (Shape shape : shapes) {
+      Rectangle2D bounds = shape.getBounds2D();
       double boundsX = bounds.getX();
       double boundsY = bounds.getY();
 

@@ -1,39 +1,24 @@
 package org.kharon.renderers;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
-import java.awt.geom.Rectangle2D;
+import java.awt.Shape;
+import java.awt.font.GlyphVector;
 
 import org.kharon.Graph;
+import org.kharon.GraphShape;
 import org.kharon.Node;
 
 public class DefaultLabelRenderer implements LabelRenderer {
 
   @Override
-  public void render(Graphics g, Node node, RenderContext renderContext, Rectangle2D bounds) {
+  public GraphShape render(Graphics g, Node node, RenderContext renderContext) {
     String label = node.getLabel();
     if (label != null) {
-      Color oldColor = g.getColor();
-
-      Color color = node.getColor();
-      if (color == null) {
-        Graph graph = renderContext.getGraph();
-        color = graph.getSettings().getDefaultLabelColor();
-      }
-      g.setColor(color);
-
-      g.drawString(label, (int) bounds.getX(), (int) (bounds.getY() + bounds.getHeight()));
-
-      g.setColor(oldColor);
-    }
-  }
-
-  @Override
-  public Rectangle2D determineBounds(Graphics g, Node node, RenderContext renderContext) {
-    String label = node.getLabel();
-    if (label != null) {
-      FontMetrics fontMetrics = g.getFontMetrics();
+      Font font = g.getFont();
+      FontMetrics fontMetrics = g.getFontMetrics(font);
 
       int nodeX = node.getX();
       int nodeY = node.getY();
@@ -44,7 +29,18 @@ public class DefaultLabelRenderer implements LabelRenderer {
       int labelX = nodeX + (size / 2) - (labelWidth / 2);
       int labelY = nodeY + (size / 2) + labelHeight + (size / 2);
 
-      return new Rectangle2D.Double(labelX, labelY - labelHeight, labelWidth, labelHeight);
+      GlyphVector vector = font.createGlyphVector(fontMetrics.getFontRenderContext(), label);
+      Shape shape = vector.getOutline(labelX, labelY);
+      GraphShape graphShape = new GraphShape(shape);
+
+      Color color = node.getColor();
+      if (color == null) {
+        Graph graph = renderContext.getGraph();
+        color = graph.getSettings().getDefaultLabelColor();
+      }
+      graphShape.setFillPaint(color);
+
+      return graphShape;
     } else {
       return null;
     }

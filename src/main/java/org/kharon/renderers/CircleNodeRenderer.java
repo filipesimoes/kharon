@@ -1,41 +1,32 @@
 package org.kharon.renderers;
 
 import java.awt.Color;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.geom.Rectangle2D;
+import java.awt.Shape;
+import java.awt.geom.Ellipse2D;
 
 import org.kharon.Graph;
+import org.kharon.GraphShape;
 import org.kharon.Node;
 
 public class CircleNodeRenderer implements NodeRenderer {
 
   @Override
-  public void render(Graphics g, Node node, RenderContext renderContext, Rectangle2D bounds) {
-    Color oldColor = g.getColor();
-
-    Graphics2D g2 = (Graphics2D) g;
+  public GraphShape render(Graphics2D g, Node node, RenderContext renderContext) {
     int x = node.getX();
     int y = node.getY();
     int size = node.getSize();
 
+    Shape shape = new Ellipse2D.Double(x, y, size, size);
+
+    GraphShape graphShape = new GraphShape(shape);
     Color color = node.getColor();
     if (color == null) {
       Graph graph = renderContext.getGraph();
       color = graph.getSettings().getDefaultNodeColor();
     }
-    g.setColor(color);
-    g2.fillOval(x, y, size, size);
-
-    g.setColor(oldColor);
-  }
-
-  @Override
-  public Rectangle2D determineBounds(Graphics g, Node node, RenderContext renderContext) {
-    int x = node.getX();
-    int y = node.getY();
-    int size = node.getSize();
-    return new Rectangle2D.Double(x, y, size, size);
+    graphShape.setFillPaint(color);
+    return graphShape;
   }
 
 }

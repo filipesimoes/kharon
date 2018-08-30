@@ -1,14 +1,12 @@
 package org.kharon.renderers;
 
-import java.awt.Graphics;
-import java.awt.geom.Rectangle2D;
+import java.awt.Graphics2D;
 
+import org.kharon.GraphShape;
 import org.kharon.Node;
 
 public interface NodeRenderer {
-  
-  Rectangle2D determineBounds(Graphics g, Node node, RenderContext renderContext);
 
-  void render(Graphics g, Node node, RenderContext renderContext, Rectangle2D bounds);
+  GraphShape render(Graphics2D g, Node node, RenderContext renderContext);
 
 }

@@ -35,4 +35,7 @@ public class NodeBoundingBox {
     return boxes;
   }
 
+  public void clear() {
+    this.boxes.clear();
+  }
 }
