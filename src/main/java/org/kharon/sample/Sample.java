@@ -13,6 +13,7 @@ import java.net.URISyntaxException;
 import javax.swing.AbstractAction;
 import javax.swing.InputMap;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 
@@ -37,14 +38,14 @@ public class Sample {
 
     Graph graph = new Graph();
 
-    int totalNodes = 100;
+    int totalNodes = 5;
     Node[] nodes = new Node[totalNodes];
 
     for (int i = 0; i < totalNodes; i++) {
       Node node = new Node("" + i);
       node.setLabel("Node " + i);
-      node.setX((int) (Math.random() * 1200));
-      node.setY((int) (Math.random() * 700));
+      node.setX(10 + (int) (Math.random() * 500));
+      node.setY(10 + (int) (Math.random() * 500));
       node.setType("bug");
       node.setSize(30);
       graph.addNode(node);
@@ -172,12 +173,16 @@ public class Sample {
     KeyStroke delete = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
     inputMap.put(delete, "RemoveSelected");
 
-     graphPanel.setShowBoundingBoxes(true);
+    graphPanel.setShowBoundingBoxes(true);
 
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(graphPanel);
 
-    frame.add(panel);
+    frame.add(panel, BorderLayout.CENTER);
+    JLabel comp = new JLabel("Kharon");
+    comp.setHorizontalAlignment(JLabel.CENTER);
+    frame.add(comp, BorderLayout.NORTH);
+
     frame.pack();
     frame.setLocationRelativeTo(null);
     frame.setExtendedState(JFrame.MAXIMIZED_BOTH);

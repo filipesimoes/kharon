@@ -4,9 +4,10 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -17,8 +18,8 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Rectangle2D.Double;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,12 +40,9 @@ import org.kharon.renderers.Renderers;
 import org.kharon.renderers.SelectionRenderer;
 
 public class GraphPanel extends JComponent
-    implements MouseListener, MouseWheelListener, MouseMotionListener, GraphListener {
+    implements MouseListener, MouseWheelListener, MouseMotionListener, GraphListener, ComponentListener {
 
   private static final long serialVersionUID = 3827345534868023684L;
-
-  // private static final Logger LOGGER =
-  // Logger.getLogger(GraphPanel.class.getSimpleName());
 
   private Graph graph;
   private StageMode stageMode = StageMode.PAN;
@@ -76,15 +74,16 @@ public class GraphPanel extends JComponent
   private Set<String> selectedNodes = new HashSet<>();
   private Map<String, NodeBoundingBox> boxesIndex = new HashMap<>();
 
-  private Map<String, Shape> nodeShapesMap = new HashMap<>();
-  private Map<String, Shape> labelShapesMap = new HashMap<>();
-  private Map<String, Shape> edgeShapesMap = new HashMap<>();
-  private Map<String, Shape> selectionShapesMap = new HashMap<>();
-
   private Set<String> idleNodes = new HashSet<>();
   private Set<String> liveNodes = new HashSet<>();
 
-  private Double selectionRectangle;
+  private Double selectionBox;
+
+  private BufferedImage idleBuffer;
+  private Graphics2D idleGraphics;
+
+  private int lastBufferX;
+  private int lastBufferY;
 
   public GraphPanel(Graph graph) {
     super();
@@ -93,6 +92,7 @@ public class GraphPanel extends JComponent
     this.addMouseWheelListener(this);
     this.addMouseMotionListener(this);
     this.addMouseListener(this);
+    this.addComponentListener(this);
 
     this.graph.addListener(this);
 
@@ -101,56 +101,96 @@ public class GraphPanel extends JComponent
 
   @Override
   protected void paintComponent(Graphics g) {
-    Graphics2D liveGraphics = (Graphics2D) g;
+    Graphics2D g2d = (Graphics2D) g;
 
-    Rectangle clipBounds = liveGraphics.getClipBounds();
+    AffineTransform currentTransform = g2d.getTransform();
+    AffineTransform graphTransformation = (AffineTransform) currentTransform.clone();
+    graphTransformation.concatenate(transform);
 
-    AffineTransform oldTransform = liveGraphics.getTransform();
-    AffineTransform currentTransformation = (AffineTransform) oldTransform.clone();
-    currentTransformation.concatenate(this.transform);
+    Rectangle2D clipBounds = g2d.getClipBounds();
+    try {
+      clipBounds = graphTransformation.createInverse().createTransformedShape(clipBounds).getBounds2D();
+    } catch (NoninvertibleTransformException e) {
+      throw new RuntimeException(e);
+    }
 
     RenderingHints rh = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+    BufferedImage liveBuffer = new BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    Graphics2D liveGraphics = liveBuffer.createGraphics();
     liveGraphics.setRenderingHints(rh);
+
+    int originX = (int) (-1 * currentTransform.getTranslateX());
+    int originY = (int) (-1 * currentTransform.getTranslateY());
+
+    boolean paintIdleNodes = idleBuffer == null || idleBuffer.getHeight() != this.getHeight()
+        || idleBuffer.getWidth() != this.getWidth() || this.lastBufferX != originX || this.lastBufferY != originY;
+    if (paintIdleNodes) {
+      idleBuffer = new BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TYPE_INT_ARGB);
+      idleGraphics = idleBuffer.createGraphics();
+      idleGraphics.setRenderingHints(rh);
+
+      this.lastBufferX = originX;
+      this.lastBufferY = originY;
+    }
 
     GraphRenderer graphRenderer = Renderers.getGraphRenderer(this.graph.getType());
     graphRenderer.render(liveGraphics, this.graph);
 
-    this.boxesIndex.clear();
-    paintEdges(liveGraphics, currentTransformation, clipBounds, graph.getEdges());
-    paintNodes(liveGraphics, currentTransformation, clipBounds, graph.getNodes());
+    Set<Edge> liveEdges = graph.getNodesEdges(this.liveNodes);
+    paintEdges(liveGraphics, graphTransformation, clipBounds, liveEdges);
+    paintNodes(liveGraphics, graphTransformation, currentTransform, clipBounds, graph.getNodes(this.liveNodes));
 
-    paintSelections(liveGraphics, currentTransformation, clipBounds);
-
-    if (this.selectionRectangle != null) {
-      paintSelectionBox(liveGraphics);
+    if (paintIdleNodes) {
+      Set<Edge> idleEdges = graph.getNodesEdges(this.idleNodes);
+      idleEdges.removeAll(liveEdges);
+      paintEdges(idleGraphics, graphTransformation, clipBounds, idleEdges);
+      paintNodes(idleGraphics, graphTransformation, currentTransform, clipBounds, graph.getNodes(this.idleNodes));
     }
-    liveGraphics.draw(clipBounds);
-    liveGraphics.setTransform(oldTransform);
+
+    paintSelections(liveGraphics, graphTransformation, clipBounds);
+
+    if (this.selectionBox != null) {
+      paintSelectionBox(liveGraphics, graphTransformation);
+    }
+
+    Color color = liveGraphics.getColor();
+    liveGraphics.setColor(Color.BLUE);
+    liveGraphics.fill(graphTransformation.createTransformedShape(new Rectangle2D.Double(-2, -2, 4, 4)));
+    liveGraphics.setColor(Color.GREEN);
+    liveGraphics.fill(new Rectangle2D.Double(-2, -2, 4, 4));
+
+    liveGraphics.setColor(color);
+
+    g2d.drawImage(idleBuffer, originX, originY, null);
+    g2d.drawImage(liveBuffer, originX, originY, null);
+
+    liveGraphics.dispose();
   }
 
-  private void paintSelections(Graphics2D liveGraphics, AffineTransform currentTransformation, Rectangle clipBounds) {
+  private void paintSelections(Graphics2D g2d, AffineTransform tx, Rectangle2D clipBounds) {
     for (String selectedId : this.selectedNodes) {
       Node node = this.graph.getNode(selectedId);
-      Shape labelShape = labelShapesMap.get(selectedId);
-      Shape nodeShape = nodeShapesMap.get(selectedId);
-      Collection<Shape> shapes = new ArrayList<>(Arrays.asList(labelShape, nodeShape));
-      if (ShapeUtils.intersects(clipBounds, shapes)) {
+      NodeBoundingBox boundingBox = this.boxesIndex.get(node.getId());
+      if (boundingBox.intersects(clipBounds)) {
         SelectionRenderer renderer = Renderers.getSelectionRenderer(node.getSelectionType());
-        GraphShape selectionGraphShape = renderer.render(liveGraphics, shapes, renderContext);
-        selectionGraphShape.draw(liveGraphics, currentTransformation);
-        this.selectionShapesMap.put(selectedId, selectionGraphShape.getShape());
+        GraphShape selectionGraphShape = renderer.render(g2d, boundingBox, renderContext);
+        if (selectionGraphShape != null) {
+          selectionGraphShape.draw(g2d, tx);
+        }
       }
     }
   }
 
-  private void paintSelectionBox(Graphics2D liveGraphics) {
-    Color oldColor = liveGraphics.getColor();
-    liveGraphics.setColor(this.graph.getSettings().getSelectionColor());
-    liveGraphics.draw(this.selectionRectangle);
-    liveGraphics.setColor(oldColor);
+  private void paintSelectionBox(Graphics2D g2d, AffineTransform tx) {
+    Color oldColor = g2d.getColor();
+    g2d.setColor(this.graph.getSettings().getSelectionColor());
+    g2d.draw(tx.createTransformedShape(selectionBox));
+    g2d.setColor(oldColor);
   }
 
-  private void paintNodes(Graphics2D g2d, AffineTransform tx, Rectangle clipBounds, Collection<Node> nodes) {
+  private void paintNodes(Graphics2D g2d, AffineTransform stageTx, AffineTransform componentTx, Rectangle2D clipBounds,
+      Collection<Node> nodes) {
     for (Node node : nodes) {
       NodeBoundingBox nodeBoundingBox = this.boxesIndex.get(node.getId());
       if (nodeBoundingBox == null) {
@@ -162,42 +202,34 @@ public class GraphPanel extends JComponent
 
       NodeRenderer renderer = Renderers.getNodeRenderer(node.getType());
       GraphShape nodeGraphShape = renderer.render(g2d, node, renderContext);
-      String nodeId = node.getId();
       if (nodeGraphShape != null && nodeGraphShape.getShape().intersects(clipBounds)) {
-        nodeGraphShape.draw(g2d, tx);
-        nodeShapesMap.put(nodeId, nodeGraphShape.getShape());
+        Shape shape = nodeGraphShape.draw(g2d, stageTx);
 
-        Rectangle2D bounds = nodeGraphShape.getShape().getBounds2D();
-        nodeBoundingBox.addBox(bounds);
+        nodeBoundingBox.addBox(nodeGraphShape.getShape().getBounds2D());
         if (this.showBoundingBoxes) {
-          Shape box = tx.createTransformedShape(bounds);
-          g2d.draw(box);
+          g2d.draw(shape.getBounds2D());
         }
       }
 
       LabelRenderer labelRenderer = Renderers.getLabelRenderer(node.getLabelType());
       GraphShape labelGraphShape = labelRenderer.render(g2d, node, renderContext);
       if (labelGraphShape != null && labelGraphShape.getShape().intersects(clipBounds)) {
-        labelGraphShape.draw(g2d, tx);
-        labelShapesMap.put(nodeId, labelGraphShape.getShape());
+        Shape shape = labelGraphShape.draw(g2d, stageTx);
 
-        Rectangle2D bounds = labelGraphShape.getShape().getBounds2D();
-        nodeBoundingBox.addBox(bounds);
+        nodeBoundingBox.addBox(labelGraphShape.getShape().getBounds2D());
         if (this.showBoundingBoxes) {
-          Shape box = tx.createTransformedShape(bounds);
-          g2d.draw(box);
+          g2d.draw(shape.getBounds2D());
         }
       }
     }
   }
 
-  private void paintEdges(Graphics2D g2d, AffineTransform tx, Rectangle clipBounds, Collection<Edge> edges) {
+  private void paintEdges(Graphics2D g2d, AffineTransform tx, Rectangle2D clipBounds, Collection<Edge> edges) {
     for (Edge edge : edges) {
       EdgeRenderer renderer = Renderers.getEdgeRenderer(edge.getType());
       GraphShape graphShape = renderer.render(g2d, edge, renderContext);
       if (graphShape != null && graphShape.getShape().intersects(clipBounds)) {
         graphShape.draw(g2d, tx);
-        edgeShapesMap.put(edge.getId(), graphShape.getShape());
       }
     }
   }
@@ -301,11 +333,9 @@ public class GraphPanel extends JComponent
 
   private Node getNodeUnderMouse(MouseEvent evt) {
     Point2D evtPoint = invert(evt.getPoint());
-    int x = (int) evtPoint.getX();
-    int y = (int) evtPoint.getY();
     for (Entry<String, NodeBoundingBox> entry : boxesIndex.entrySet()) {
       NodeBoundingBox box = entry.getValue();
-      if (box.contains(x, y)) {
+      if (box.contains(evtPoint)) {
         String id = entry.getKey();
         return this.graph.getNode(id);
       }
@@ -319,7 +349,7 @@ public class GraphPanel extends JComponent
     }
     for (Entry<String, NodeBoundingBox> entry : boxesIndex.entrySet()) {
       NodeBoundingBox box = entry.getValue();
-      if (box.intersects(selectionRectangle)) {
+      if (box.intersects(selectionBox)) {
         String id = entry.getKey();
         this.selectedNodes.add(id);
       }
@@ -403,6 +433,7 @@ public class GraphPanel extends JComponent
     } catch (NoninvertibleTransformException e) {
       throw new RuntimeException(e);
     }
+    resetBuffer();
   }
 
   @Override
@@ -434,13 +465,13 @@ public class GraphPanel extends JComponent
     double y = Math.min(this.startDragY, evtLocation.getY());
     double width = Math.abs(this.startDragX - evtLocation.getX());
     double height = Math.abs(this.startDragY - evtLocation.getY());
-    if (selectionRectangle == null) {
-      this.selectionRectangle = new Rectangle2D.Double(x, y, width, height);
+    if (selectionBox == null) {
+      this.selectionBox = new Rectangle2D.Double(x, y, width, height);
     } else {
-      this.selectionRectangle.x = x;
-      this.selectionRectangle.y = y;
-      this.selectionRectangle.width = width;
-      this.selectionRectangle.height = height;
+      this.selectionBox.x = x;
+      this.selectionBox.y = y;
+      this.selectionBox.width = width;
+      this.selectionBox.height = height;
     }
   }
 
@@ -459,7 +490,7 @@ public class GraphPanel extends JComponent
     } catch (NoninvertibleTransformException e) {
       throw new RuntimeException(e);
     }
-
+    resetBuffer();
     notifyStageDragged(evt);
   }
 
@@ -511,6 +542,11 @@ public class GraphPanel extends JComponent
 
       this.idleNodes.remove(nodeUnderMouse.getId());
       this.liveNodes.add(nodeUnderMouse.getId());
+      if (this.nodeDragMode == NodeDragMode.SELECTION) {
+        this.liveNodes.addAll(selectedNodes);
+        this.idleNodes.removeAll(selectedNodes);
+      }
+      resetBuffer();
 
       notifyNodeDragStarted(nodeUnderMouse, e);
     } else {
@@ -521,21 +557,22 @@ public class GraphPanel extends JComponent
 
   private void stopDrag(MouseEvent e) {
     if (this.isDragging) {
-      if (this.selectionRectangle != null && this.stageMode == StageMode.SELECTION) {
+      if (this.selectionBox != null && this.stageMode == StageMode.SELECTION) {
         applyCurrentSelection(e);
       }
 
       if (nodeUnderMouse != null) {
         notifyNodeDragStopped(nodeUnderMouse, e);
-        this.liveNodes.remove(nodeUnderMouse.getId());
-        this.idleNodes.add(nodeUnderMouse.getId());
 
+        this.idleNodes.addAll(this.liveNodes);
+        this.liveNodes.clear();
+        resetBuffer();
       } else {
         notifyStageDragStopped(e);
       }
       this.isDragging = false;
       this.nodeUnderMouse = null;
-      this.selectionRectangle = null;
+      this.selectionBox = null;
     }
   }
 
@@ -628,6 +665,7 @@ public class GraphPanel extends JComponent
   @Override
   public void nodeAdded(Node node) {
     this.idleNodes.add(node.getId());
+    resetBuffer();
   }
 
   @Override
@@ -635,21 +673,20 @@ public class GraphPanel extends JComponent
     String nodeId = node.getId();
     this.selectedNodes.remove(nodeId);
     this.boxesIndex.remove(nodeId);
+    this.liveNodes.remove(nodeId);
+    this.idleNodes.remove(nodeId);
 
-    this.nodeShapesMap.remove(nodeId);
-    this.labelShapesMap.remove(nodeId);
-    this.edgeShapesMap.remove(nodeId);
-    this.selectionShapesMap.remove(nodeId);
+    resetBuffer();
   }
 
   @Override
   public void edgeAdded(Edge edge) {
-
+    resetBuffer();
   }
 
   @Override
   public void edgeRemoved(Edge edge) {
-
+    resetBuffer();
   }
 
   public StageMode getStageMode() {
@@ -666,6 +703,35 @@ public class GraphPanel extends JComponent
 
   public void setNodeDragMode(NodeDragMode nodeDragMode) {
     this.nodeDragMode = nodeDragMode;
+  }
+
+  private void resetBuffer() {
+    if (this.idleGraphics != null) {
+      this.idleGraphics.dispose();
+    }
+    this.idleBuffer = null;
+    this.idleGraphics = null;
+  }
+
+  @Override
+  public void componentResized(ComponentEvent e) {
+    resetBuffer();
+    repaint();
+  }
+
+  @Override
+  public void componentMoved(ComponentEvent e) {
+
+  }
+
+  @Override
+  public void componentShown(ComponentEvent e) {
+    resetBuffer();
+  }
+
+  @Override
+  public void componentHidden(ComponentEvent e) {
+
   }
 
 }

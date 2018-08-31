@@ -42,7 +42,7 @@ public class GraphShape {
     draw(g2d, IDENTITY);
   }
 
-  public final void draw(Graphics2D g2d, AffineTransform tx) {
+  public final Shape draw(Graphics2D g2d, AffineTransform tx) {
     Paint oldPaint = g2d.getPaint();
     
     Shape txShape = tx.createTransformedShape(shape);
@@ -58,6 +58,8 @@ public class GraphShape {
     }
 
     g2d.setPaint(oldPaint);
+    
+    return txShape;
   }
 
 }
