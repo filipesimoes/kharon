@@ -103,10 +103,12 @@ public class Graph {
     if (removed != null) {
       String source = edge.getSource();
       NodeHolder sourceHolder = getNodeHolder(source);
+      sourceHolder.removeEdge(edge);
       sourceHolder.getNode().decreaseDegree();
 
       String target = edge.getTarget();
       NodeHolder targetHolder = getNodeHolder(target);
+      targetHolder.removeEdge(edge);
       targetHolder.getNode().decreaseDegree();
 
       notifyEdgeRemoved(edge);
@@ -175,6 +177,11 @@ public class Graph {
     public NodeHolder(Node node) {
       super();
       this.node = node;
+    }
+
+    public void removeEdge(Edge edge) {
+      this.incoming.remove(edge.getId());
+      this.outcoming.remove(edge.getId());
     }
 
     public void addEdge(Edge edge) {

@@ -107,8 +107,13 @@ public class GraphPanel extends JComponent
     AffineTransform graphTransformation = (AffineTransform) currentTransform.clone();
     graphTransformation.concatenate(transform);
 
+    int originX = (int) (-1 * currentTransform.getTranslateX());
+    int originY = (int) (-1 * currentTransform.getTranslateY());
+
     Rectangle2D clipBounds = g2d.getClipBounds();
     try {
+      clipBounds.setFrame(clipBounds.getX() - Math.abs(originX), clipBounds.getY() - Math.abs(originY),
+          clipBounds.getWidth() + 2 * Math.abs(originX), clipBounds.getHeight() + 2 * Math.abs(originY));
       clipBounds = graphTransformation.createInverse().createTransformedShape(clipBounds).getBounds2D();
     } catch (NoninvertibleTransformException e) {
       throw new RuntimeException(e);
@@ -116,17 +121,17 @@ public class GraphPanel extends JComponent
 
     RenderingHints rh = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-    BufferedImage liveBuffer = new BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    int imageWidth = this.getWidth() + Math.abs(originX);
+    int imageHeight = this.getHeight() + Math.abs(originY);
+
+    BufferedImage liveBuffer = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
     Graphics2D liveGraphics = liveBuffer.createGraphics();
     liveGraphics.setRenderingHints(rh);
 
-    int originX = (int) (-1 * currentTransform.getTranslateX());
-    int originY = (int) (-1 * currentTransform.getTranslateY());
-
-    boolean paintIdleNodes = idleBuffer == null || idleBuffer.getHeight() != this.getHeight()
-        || idleBuffer.getWidth() != this.getWidth() || this.lastBufferX != originX || this.lastBufferY != originY;
+    boolean paintIdleNodes = idleBuffer == null || idleBuffer.getHeight() != imageHeight
+        || idleBuffer.getWidth() != imageWidth || this.lastBufferX != originX || this.lastBufferY != originY;
     if (paintIdleNodes) {
-      idleBuffer = new BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TYPE_INT_ARGB);
+      idleBuffer = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
       idleGraphics = idleBuffer.createGraphics();
       idleGraphics.setRenderingHints(rh);
 
