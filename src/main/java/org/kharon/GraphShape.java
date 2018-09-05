@@ -1,9 +1,14 @@
 package org.kharon;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.MultipleGradientPaint.ColorSpaceType;
+import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.Paint;
+import java.awt.RadialGradientPaint;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 
 public class GraphShape {
 
@@ -44,7 +49,7 @@ public class GraphShape {
 
   public final Shape draw(Graphics2D g2d, AffineTransform tx) {
     Paint oldPaint = g2d.getPaint();
-    
+
     Shape txShape = tx.createTransformedShape(shape);
 
     if (fillPaint != null) {
@@ -58,7 +63,7 @@ public class GraphShape {
     }
 
     g2d.setPaint(oldPaint);
-    
+
     return txShape;
   }
 

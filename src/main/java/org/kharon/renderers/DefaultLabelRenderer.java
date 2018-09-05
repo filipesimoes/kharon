@@ -13,9 +13,24 @@ import org.kharon.Node;
 
 public class DefaultLabelRenderer implements LabelRenderer {
 
+  private int maxLength = 30;
+
+  public DefaultLabelRenderer(int maxLength) {
+    super();
+    this.maxLength = maxLength;
+  }
+
+  public DefaultLabelRenderer() {
+    super();
+  }
+
   @Override
   public GraphShape render(Graphics g, Node node, RenderContext renderContext) {
     String label = node.getLabel();
+    if (label.length() + 3 > maxLength) {
+      label = label.substring(0, (maxLength / 2) - 3) + "..." + label.substring(label.length() - (maxLength / 2));
+    }
+
     if (label != null) {
       Font font = g.getFont();
       FontMetrics fontMetrics = g.getFontMetrics(font);

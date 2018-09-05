@@ -10,6 +10,7 @@ public class GraphSettings {
   private Color defaultSelectionColor = Color.blue;
 
   private Color selectionColor = Color.blue;
+  private Color nodeHoverColor = Color.CYAN;
 
   public Color getDefaultEdgeColor() {
     return defaultEdgeColor;
@@ -49,6 +50,14 @@ public class GraphSettings {
 
   public void setSelectionColor(Color selectionColor) {
     this.selectionColor = selectionColor;
+  }
+
+  public Color getNodeHoverColor() {
+    return nodeHoverColor;
+  }
+
+  public void setNodeHoverColor(Color nodeHoverColor) {
+    this.nodeHoverColor = nodeHoverColor;
   }
 
 }

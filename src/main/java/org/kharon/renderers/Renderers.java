@@ -10,6 +10,7 @@ public class Renderers {
   private static Map<String, EdgeRenderer> edgeRenderers;
   private static Map<String, LabelRenderer> labelRenderers;
   private static Map<String, SelectionRenderer> selectionRenderers;
+  private static Map<String, NodeHoverRenderer> hoverRenderers;
 
   static {
     graphRenderers = new HashMap<>();
@@ -29,6 +30,9 @@ public class Renderers {
 
     selectionRenderers = new HashMap<>();
     selectionRenderers.put("default", new DefaultSelectionRenderer());
+
+    hoverRenderers = new HashMap<>();
+    hoverRenderers.put("default", new DefaultNodeHoverRenderer());
   }
 
   public static GraphRenderer getGraphRenderer(String type) {
@@ -73,6 +77,14 @@ public class Renderers {
       throw new IllegalArgumentException("Unknown selection type (" + type + ").");
     }
     return selectionRenderer;
+  }
+
+  public static NodeHoverRenderer getNodeHoverRenderer(String type) {
+    NodeHoverRenderer hoverRenderer = hoverRenderers.get(type);
+    if (hoverRenderer == null) {
+      throw new IllegalArgumentException("Unknown hover type (" + type + ").");
+    }
+    return hoverRenderer;
   }
 
 }

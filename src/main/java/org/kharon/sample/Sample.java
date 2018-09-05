@@ -1,6 +1,7 @@
 package org.kharon.sample;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -8,10 +9,15 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 
+import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.InputMap;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -38,23 +44,32 @@ public class Sample {
 
     Graph graph = new Graph();
 
-    int totalNodes = 5;
-    Node[] nodes = new Node[totalNodes];
+    int totalNodes = 10;
+    Node[] nodes = new Node[totalNodes + 1];
 
     for (int i = 0; i < totalNodes; i++) {
       Node node = new Node("" + i);
       node.setLabel("Node " + i);
-      node.setX(10 + (int) (Math.random() * 500));
-      node.setY(10 + (int) (Math.random() * 500));
+      node.setX(50 + (int) (Math.random() * 1000));
+      node.setY(50 + (int) (Math.random() * 600));
       node.setType("bug");
       node.setSize(30);
       graph.addNode(node);
       nodes[i] = node;
     }
 
-    for (int i = 0; i < totalNodes; i++) {
+    Node node = new Node("special");
+    node.setLabel("Very long and special label for this node");
+    node.setX(50 + (int) (Math.random() * 1000));
+    node.setY(50 + (int) (Math.random() * 600));
+    node.setType("bug");
+    node.setSize(30);
+    graph.addNode(node);
+    nodes[totalNodes] = node;
+
+    for (int i = 0; i < nodes.length; i++) {
       for (int j = 0; j < 2; j++) {
-        Node target = nodes[(int) ((totalNodes - 1) * Math.random())];
+        Node target = nodes[(int) ((nodes.length - 1) * Math.random())];
         Edge edge = new Edge("" + i + "_" + j, nodes[i], target);
         graph.addEdge(edge);
       }
@@ -66,10 +81,20 @@ public class Sample {
     frame.setPreferredSize(new Dimension(200, 200));
 
     final GraphPanel graphPanel = new GraphPanel(graph);
+    graphPanel.setBackground(Color.WHITE);
     graphPanel.addNodeListener(new NodeListener() {
       @Override
       public void nodeClicked(Node node, MouseEvent e) {
         System.out.println("Node " + node.getId() + " clicked.");
+
+        int clickCount = e.getClickCount();
+
+        if (clickCount == 1) {
+          nodeSingleClicked(node, e);
+        }
+      }
+
+      private void nodeSingleClicked(Node node, MouseEvent e) {
         boolean selected = graphPanel.isNodeSelected(node);
         boolean keepSelection = e.isControlDown() || e.isShiftDown();
         if (!selected) {
@@ -108,6 +133,16 @@ public class Sample {
       @Override
       public void nodeReleased(Node node, MouseEvent e) {
         System.out.println("Node " + node.getId() + " released.");
+      }
+
+      @Override
+      public void nodeHover(Node node, MouseEvent e) {
+        graphPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      }
+
+      @Override
+      public void nodeOut(MouseEvent e) {
+        graphPanel.setCursor(Cursor.getDefaultCursor());
       }
     });
 
@@ -161,6 +196,31 @@ public class Sample {
     InputMap inputMap = graphPanel.getInputMap();
     inputMap.put(controlA, "SelectAll");
 
+    graphPanel.getActionMap().put("SaveImage", new AbstractAction() {
+
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        JFileChooser fileChooser = new JFileChooser();
+        int option = fileChooser.showSaveDialog(graphPanel);
+        if (option == JFileChooser.APPROVE_OPTION) {
+          BufferedImage image = graphPanel.toImage();
+          File selectedFile = fileChooser.getSelectedFile();
+          if (!selectedFile.getName().endsWith(".png")) {
+            selectedFile = new File(selectedFile.getParentFile(), selectedFile.getName() + ".png");
+            try {
+              ImageIO.write(image, "png", selectedFile);
+            } catch (IOException e1) {
+              throw new RuntimeException(e1);
+            }
+          }
+        }
+      }
+    });
+    KeyStroke controlS = KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK);
+    inputMap.put(controlS, "SaveImage");
+
     graphPanel.getActionMap().put("RemoveSelected", new AbstractAction() {
 
       private static final long serialVersionUID = 1L;
@@ -172,8 +232,6 @@ public class Sample {
     });
     KeyStroke delete = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
     inputMap.put(delete, "RemoveSelected");
-
-    graphPanel.setShowBoundingBoxes(true);
 
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(graphPanel);

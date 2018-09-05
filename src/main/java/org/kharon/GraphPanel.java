@@ -20,6 +20,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.Rectangle2D.Double;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,6 +35,7 @@ import javax.swing.SwingUtilities;
 import org.kharon.renderers.EdgeRenderer;
 import org.kharon.renderers.GraphRenderer;
 import org.kharon.renderers.LabelRenderer;
+import org.kharon.renderers.NodeHoverRenderer;
 import org.kharon.renderers.NodeRenderer;
 import org.kharon.renderers.RenderContext;
 import org.kharon.renderers.Renderers;
@@ -85,6 +87,8 @@ public class GraphPanel extends JComponent
   private int lastBufferX;
   private int lastBufferY;
 
+  private boolean isPrinting;
+
   public GraphPanel(Graph graph) {
     super();
     this.graph = graph;
@@ -102,15 +106,19 @@ public class GraphPanel extends JComponent
   @Override
   protected void paintComponent(Graphics g) {
     Graphics2D g2d = (Graphics2D) g;
+    paintGraph(g, this.transform, g2d.getClipBounds());
+  }
+
+  private void paintGraph(Graphics g, AffineTransform tx, Rectangle2D clipBounds) {
+    Graphics2D g2d = (Graphics2D) g;
 
     AffineTransform currentTransform = g2d.getTransform();
     AffineTransform graphTransformation = (AffineTransform) currentTransform.clone();
-    graphTransformation.concatenate(transform);
+    graphTransformation.concatenate(tx);
 
     int originX = (int) (-1 * currentTransform.getTranslateX());
     int originY = (int) (-1 * currentTransform.getTranslateY());
 
-    Rectangle2D clipBounds = g2d.getClipBounds();
     try {
       clipBounds.setFrame(clipBounds.getX() - Math.abs(originX), clipBounds.getY() - Math.abs(originY),
           clipBounds.getWidth() + 2 * Math.abs(originX), clipBounds.getHeight() + 2 * Math.abs(originY));
@@ -135,6 +143,9 @@ public class GraphPanel extends JComponent
       idleGraphics = idleBuffer.createGraphics();
       idleGraphics.setRenderingHints(rh);
 
+      idleGraphics.setBackground(getBackground());
+      idleGraphics.clearRect(0, 0, imageWidth, imageHeight);
+
       this.lastBufferX = originX;
       this.lastBufferY = originY;
     }
@@ -153,9 +164,24 @@ public class GraphPanel extends JComponent
       paintNodes(idleGraphics, graphTransformation, currentTransform, clipBounds, graph.getNodes(this.idleNodes));
     }
 
-    paintSelections(liveGraphics, graphTransformation, clipBounds);
+    g2d.drawImage(idleBuffer, originX, originY, null);
 
-    if (this.selectionBox != null) {
+    Node hoveredNode = getHoveredNode();
+    if (hoveredNode != null && !isPrinting) {
+      NodeBoundingBox box = this.boxesIndex.get(hoveredNode.getId());
+      if (box != null) {
+        NodeHoverRenderer renderer = Renderers.getNodeHoverRenderer("default");
+        GraphShape graphShape = renderer.render(g2d, box, renderContext);
+        graphShape.draw(g2d, tx);
+        paintNodes(liveGraphics, graphTransformation, currentTransform, clipBounds, Arrays.asList(hoveredNode));
+      }
+    }
+
+    if (!isPrinting) {
+      paintSelections(liveGraphics, graphTransformation, clipBounds);
+    }
+
+    if (this.selectionBox != null && !isPrinting) {
       paintSelectionBox(liveGraphics, graphTransformation);
     }
 
@@ -166,8 +192,6 @@ public class GraphPanel extends JComponent
     liveGraphics.fill(new Rectangle2D.Double(-2, -2, 4, 4));
 
     liveGraphics.setColor(color);
-
-    g2d.drawImage(idleBuffer, originX, originY, null);
     g2d.drawImage(liveBuffer, originX, originY, null);
 
     liveGraphics.dispose();
@@ -199,7 +223,7 @@ public class GraphPanel extends JComponent
     for (Node node : nodes) {
       NodeBoundingBox nodeBoundingBox = this.boxesIndex.get(node.getId());
       if (nodeBoundingBox == null) {
-        nodeBoundingBox = new NodeBoundingBox();
+        nodeBoundingBox = new NodeBoundingBox(1.4d);
         this.boxesIndex.put(node.getId(), nodeBoundingBox);
       } else {
         nodeBoundingBox.clear();
@@ -208,22 +232,22 @@ public class GraphPanel extends JComponent
       NodeRenderer renderer = Renderers.getNodeRenderer(node.getType());
       GraphShape nodeGraphShape = renderer.render(g2d, node, renderContext);
       if (nodeGraphShape != null && nodeGraphShape.getShape().intersects(clipBounds)) {
-        Shape shape = nodeGraphShape.draw(g2d, stageTx);
+        nodeGraphShape.draw(g2d, stageTx);
 
-        nodeBoundingBox.addBox(nodeGraphShape.getShape().getBounds2D());
+        Rectangle2D bounds = nodeBoundingBox.addBox(nodeGraphShape.getShape());
         if (this.showBoundingBoxes) {
-          g2d.draw(shape.getBounds2D());
+          g2d.draw(stageTx.createTransformedShape(bounds));
         }
       }
 
       LabelRenderer labelRenderer = Renderers.getLabelRenderer(node.getLabelType());
       GraphShape labelGraphShape = labelRenderer.render(g2d, node, renderContext);
       if (labelGraphShape != null && labelGraphShape.getShape().intersects(clipBounds)) {
-        Shape shape = labelGraphShape.draw(g2d, stageTx);
+        labelGraphShape.draw(g2d, stageTx);
 
-        nodeBoundingBox.addBox(labelGraphShape.getShape().getBounds2D());
+        Rectangle2D bounds = nodeBoundingBox.addBox(labelGraphShape.getShape());
         if (this.showBoundingBoxes) {
-          g2d.draw(shape.getBounds2D());
+          g2d.draw(stageTx.createTransformedShape(bounds));
         }
       }
     }
@@ -237,6 +261,12 @@ public class GraphPanel extends JComponent
         graphShape.draw(g2d, tx);
       }
     }
+  }
+
+  public BufferedImage toImage() {
+    BufferedImage image = new BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    print(image.getGraphics());
+    return image;
   }
 
   public Graph getGraph() {
@@ -309,6 +339,18 @@ public class GraphPanel extends JComponent
   private void notifyNodePressed(Node node, MouseEvent e) {
     for (NodeListener listener : this.nodeListeners) {
       listener.nodePressed(node, e);
+    }
+  }
+
+  private void notifyNodeHover(Node node, MouseEvent e) {
+    for (NodeListener listener : this.nodeListeners) {
+      listener.nodeHover(node, e);
+    }
+  }
+
+  private void notifyNodeOut(MouseEvent e) {
+    for (NodeListener listener : this.nodeListeners) {
+      listener.nodeOut(e);
     }
   }
 
@@ -488,7 +530,12 @@ public class GraphPanel extends JComponent
     double stageOffsetX = x - this.startDragX;
     double stageOffsetY = y - this.startDragY;
 
-    this.transform.translate(stageOffsetX, stageOffsetY);
+    translateStage(stageOffsetX, stageOffsetY);
+    notifyStageDragged(evt);
+  }
+
+  private void translateStage(double x, double y) {
+    this.transform.translate(x, y);
 
     try {
       this.inverseTransform = this.transform.createInverse();
@@ -496,7 +543,6 @@ public class GraphPanel extends JComponent
       throw new RuntimeException(e);
     }
     resetBuffer();
-    notifyStageDragged(evt);
   }
 
   private void dragSelectedNodes(MouseEvent evt) {
@@ -599,7 +645,23 @@ public class GraphPanel extends JComponent
 
   @Override
   public void mouseMoved(MouseEvent e) {
+    boolean wasHovering = this.nodeUnderMouse != null;
+    String oldId = wasHovering ? this.nodeUnderMouse.getId() : null;
 
+    this.nodeUnderMouse = getNodeUnderMouse(e);
+
+    boolean isHovering = this.nodeUnderMouse != null;
+    String id = isHovering ? this.nodeUnderMouse.getId() : null;
+
+    if (wasHovering && !isHovering) {
+      notifyNodeOut(e);
+    } else if (!wasHovering && isHovering) {
+      notifyNodeHover(getHoveredNode(), e);
+    } else if (wasHovering && isHovering && !id.equals(oldId)) {
+      notifyNodeOut(e);
+      notifyNodeHover(getHoveredNode(), e);
+    }
+    repaint();
   }
 
   public boolean isShowBoundingBoxes() {
@@ -640,16 +702,40 @@ public class GraphPanel extends JComponent
     removeNodes(selectedNodes);
   }
 
+  public void selectNodes(Collection<String> ids, boolean keepSelection) {
+    if (!keepSelection) {
+      this.selectedNodes.clear();
+    }
+    boolean modified = !keepSelection;
+    for (String id : ids) {
+      if (!this.graph.containsNode(id)) {
+        throw new IllegalArgumentException("Node " + id + " does not exist.");
+      }
+      modified = modified | this.selectedNodes.add(id);
+    }
+    if (modified) {
+      repaint();
+    }
+  }
+
+  public void selectNodes(Collection<String> ids) {
+    this.selectNodes(ids, false);
+  }
+
   public void selectNode(String id) {
     this.selectNode(id, false);
   }
 
   public void selectNode(String id, boolean keepSelection) {
+    if (!this.graph.containsNode(id)) {
+      throw new IllegalArgumentException("Node " + id + " does not exist.");
+    }
     if (!keepSelection) {
       this.selectedNodes.clear();
     }
-    this.selectedNodes.add(id);
-    repaint();
+    if (this.selectedNodes.add(id) | !keepSelection) {
+      repaint();
+    }
   }
 
   public void deselectNode(String id) {
@@ -737,6 +823,22 @@ public class GraphPanel extends JComponent
   @Override
   public void componentHidden(ComponentEvent e) {
 
+  }
+
+  public Node getHoveredNode() {
+    return this.nodeUnderMouse;
+  }
+
+  public boolean isHovered(Node node) {
+    return this.nodeUnderMouse != null && this.nodeUnderMouse.getId().equals(node.getId());
+  }
+
+  @Override
+  protected void printComponent(Graphics g) {
+    this.isPrinting = true;
+    resetBuffer();
+    super.printComponent(g);
+    this.isPrinting = false;
   }
 
 }

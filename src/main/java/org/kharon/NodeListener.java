@@ -16,4 +16,8 @@ public interface NodeListener {
 
   void nodeDragged(Node node, MouseEvent e);
 
+  void nodeHover(Node node, MouseEvent e);
+
+  void nodeOut(MouseEvent e);
+
 }
