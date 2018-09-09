@@ -128,6 +128,7 @@ public class GraphPanel extends JComponent
     }
 
     RenderingHints rh = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g2d.setRenderingHints(rh);
 
     int imageWidth = this.getWidth() + Math.abs(originX);
     int imageHeight = this.getHeight() + Math.abs(originY);
