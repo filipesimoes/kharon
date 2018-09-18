@@ -2,12 +2,8 @@ package org.kharon;
 
 public interface GraphListener {
 
-  void nodeAdded(Node node);
+  void elementsAdded(GraphEvent e);
 
-  void nodeRemoved(Node node);
-
-  void edgeAdded(Edge edge);
-
-  void edgeRemoved(Edge edge);
+  void elementsRemoved(GraphEvent e);
 
 }

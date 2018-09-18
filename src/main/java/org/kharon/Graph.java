@@ -1,7 +1,9 @@
 package org.kharon;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -64,55 +66,147 @@ public class Graph {
     return result;
   }
 
+  public void addNodes(Collection<Node> nodes) {
+    addNodes(null, nodes);
+  }
+
+  public void addNodes(Object eventOriginator, Collection<Node> nodes) {
+    addNodesToGraph(nodes);
+    notifyElementsAdded(eventOriginator, nodes, Collections.emptySet());
+  }
+
+  private void addNodesToGraph(Collection<Node> nodes) {
+    for (Node node : nodes) {
+      this.nodeIndex.put(node.getId(), new NodeHolder(node));
+    }
+  }
+
   public void addNode(Node node) {
-    this.nodeIndex.put(node.getId(), new NodeHolder(node));
-    notifyNodeAdded(node);
+    addNodes(Arrays.asList(node));
+  }
+
+  public void removeNodes(Collection<Node> nodes) {
+    removeNodes(null, nodes);
+  }
+
+  public void removeNodes(Object eventOriginator, Collection<Node> nodes) {
+    Set<Edge> edges = getEdges(nodes);
+    Set<Edge> removedEdges = removeEdgesFromGraph(edges);
+    Set<Node> removedNodes = removeNodesFromGraph(nodes);
+    notifyElementsRemoved(eventOriginator, removedNodes, removedEdges);
+  }
+
+  private Set<Edge> getEdges(Collection<Node> nodes) {
+    Set<Edge> edges = new HashSet<>();
+    for (Node node : nodes) {
+      String id = node.getId();
+      if (this.nodeIndex.containsKey(id)) {
+        NodeHolder nodeHolder = getNodeHolder(id);
+        edges.addAll(nodeHolder.getEdges());
+      }
+    }
+    return edges;
+  }
+
+  private Set<Node> removeNodesFromGraph(Collection<Node> nodes) {
+    Set<Node> removed = new HashSet<>(nodes.size());
+    for (Node node : nodes) {
+      String id = node.getId();
+      if (this.nodeIndex.containsKey(id)) {
+        this.nodeIndex.remove(id);
+        removed.add(node);
+      }
+    }
+    return removed;
   }
 
   public void removeNode(Node node) {
-    String id = node.getId();
-    if (this.nodeIndex.containsKey(id)) {
-      NodeHolder nodeHolder = getNodeHolder(id);
+    removeNodes(Arrays.asList(node));
+  }
 
-      for (Edge edge : nodeHolder.getEdges()) {
-        removeEdge(edge);
-      }
-      this.nodeIndex.remove(id);
-      notifyNodeRemoved(node);
+  public void addEdges(Collection<Edge> edges) {
+    addEdges(null, edges);
+  }
+
+  public void addEdges(Object eventOriginator, Collection<Edge> edges) {
+    addEdgesToGraph(edges);
+    notifyElementsAdded(eventOriginator, Collections.emptySet(), edges);
+  }
+
+  private void addEdgesToGraph(Collection<Edge> edges) {
+    for (Edge edge : edges) {
+      this.edgeIndex.put(edge.getId(), edge);
+
+      String source = edge.getSource();
+      NodeHolder sourceHolder = getNodeHolder(source);
+      sourceHolder.addEdge(edge);
+      sourceHolder.getNode().increaseDegree();
+
+      String target = edge.getTarget();
+      NodeHolder targetHolder = getNodeHolder(target);
+      targetHolder.getNode().increaseDegree();
+      targetHolder.addEdge(edge);
     }
   }
 
   public void addEdge(Edge edge) {
-    this.edgeIndex.put(edge.getId(), edge);
+    addEdges(Arrays.asList(edge));
+  }
 
-    String source = edge.getSource();
-    NodeHolder sourceHolder = getNodeHolder(source);
-    sourceHolder.addEdge(edge);
-    sourceHolder.getNode().increaseDegree();
+  public void removeEdges(Collection<Edge> edges) {
+    removeEdges(null, edges);
+  }
 
-    String target = edge.getTarget();
-    NodeHolder targetHolder = getNodeHolder(target);
-    targetHolder.getNode().increaseDegree();
-    targetHolder.addEdge(edge);
+  public void removeEdges(Object eventOriginator, Collection<Edge> edges) {
+    Set<Edge> removedEdges = removeEdgesFromGraph(edges);
+    notifyElementsRemoved(eventOriginator, Collections.emptySet(), removedEdges);
+  }
 
-    notifyEdgeAdded(edge);
+  private Set<Edge> removeEdgesFromGraph(Collection<Edge> edges) {
+    Set<Edge> removedEdges = new HashSet<>();
+    for (Edge edge : edges) {
+      Edge removed = this.edgeIndex.remove(edge.getId());
+      if (removed != null) {
+        String source = edge.getSource();
+        NodeHolder sourceHolder = getNodeHolder(source);
+        sourceHolder.removeEdge(edge);
+        sourceHolder.getNode().decreaseDegree();
+
+        String target = edge.getTarget();
+        NodeHolder targetHolder = getNodeHolder(target);
+        targetHolder.removeEdge(edge);
+        targetHolder.getNode().decreaseDegree();
+
+        removedEdges.add(removed);
+      }
+    }
+    return removedEdges;
   }
 
   public void removeEdge(Edge edge) {
-    Edge removed = this.edgeIndex.remove(edge.getId());
-    if (removed != null) {
-      String source = edge.getSource();
-      NodeHolder sourceHolder = getNodeHolder(source);
-      sourceHolder.removeEdge(edge);
-      sourceHolder.getNode().decreaseDegree();
+    removeEdges(Arrays.asList(edge));
+  }
 
-      String target = edge.getTarget();
-      NodeHolder targetHolder = getNodeHolder(target);
-      targetHolder.removeEdge(edge);
-      targetHolder.getNode().decreaseDegree();
+  public void addElements(Collection<Node> nodes, Collection<Edge> edges) {
+    addElements(null, nodes, edges);
+  }
 
-      notifyEdgeRemoved(edge);
-    }
+  public void addElements(Object eventOriginator, Collection<Node> nodes, Collection<Edge> edges) {
+    addNodesToGraph(nodes);
+    addEdgesToGraph(edges);
+    notifyElementsAdded(eventOriginator, nodes, edges);
+  }
+
+  public void removeElements(Collection<Node> nodes, Collection<Edge> edges) {
+    removeElements(null, nodes, edges);
+  }
+
+  public void removeElements(Object eventOriginator, Collection<Node> nodes, Collection<Edge> edges) {
+    edges = new HashSet<>(edges);
+    edges.addAll(getEdges(nodes));
+    Set<Edge> removedEdges = removeEdgesFromGraph(edges);
+    Set<Node> removedNodes = removeNodesFromGraph(nodes);
+    notifyElementsRemoved(eventOriginator, removedNodes, removedEdges);
   }
 
   public boolean containsEdge(String id) {
@@ -143,27 +237,19 @@ public class Graph {
     this.listeners.remove(listener);
   }
 
-  private void notifyNodeAdded(Node node) {
-    for (GraphListener listener : this.listeners) {
-      listener.nodeAdded(node);
+  private void notifyElementsAdded(Object originator, Collection<Node> nodes, Collection<Edge> edges) {
+    if (!nodes.isEmpty() || !edges.isEmpty()) {
+      for (GraphListener listener : this.listeners) {
+        listener.elementsAdded(new GraphEvent(originator, nodes, edges));
+      }
     }
   }
 
-  private void notifyNodeRemoved(Node node) {
-    for (GraphListener listener : this.listeners) {
-      listener.nodeRemoved(node);
-    }
-  }
-
-  private void notifyEdgeAdded(Edge edge) {
-    for (GraphListener listener : this.listeners) {
-      listener.edgeAdded(edge);
-    }
-  }
-
-  private void notifyEdgeRemoved(Edge edge) {
-    for (GraphListener listener : this.listeners) {
-      listener.edgeRemoved(edge);
+  private void notifyElementsRemoved(Object originator, Collection<Node> nodes, Collection<Edge> edges) {
+    if (!nodes.isEmpty() || !edges.isEmpty()) {
+      for (GraphListener listener : this.listeners) {
+        listener.elementsRemoved(new GraphEvent(originator, nodes, edges));
+      }
     }
   }
 

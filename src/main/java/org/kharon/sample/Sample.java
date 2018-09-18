@@ -13,6 +13,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Collection;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
@@ -82,11 +83,11 @@ public class Sample {
 
     final GraphPanel graphPanel = new GraphPanel(graph);
     graphPanel.setBackground(Color.WHITE);
+    graphPanel.setHistoryEnabled(true);
     graphPanel.addNodeListener(new NodeListener() {
       @Override
       public void nodeClicked(Node node, MouseEvent e) {
         System.out.println("Node " + node.getId() + " clicked.");
-
         int clickCount = e.getClickCount();
 
         if (clickCount == 1) {
@@ -107,27 +108,40 @@ public class Sample {
       }
 
       @Override
-      public void nodeDragStarted(Node node, MouseEvent e) {
-        System.out.println("Node " + node.getId() + " drag started.");
+      public void nodeDragStarted(Collection<Node> nodes, MouseEvent e) {
+        for (Node node : nodes) {
+          if (graphPanel.isNodeUnderMouse(node)) {
+            boolean keepSelection = graphPanel.isNodeSelected(node);
+            graphPanel.selectNode(node.getId(), keepSelection);
+          }
+          System.out.println("Node " + node.getId() + " drag started");
+        }
         graphPanel.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
-        boolean keepSelection = graphPanel.isNodeSelected(node);
-        graphPanel.selectNode(node.getId(), keepSelection);
       }
 
       @Override
-      public void nodeDragStopped(Node node, MouseEvent e) {
-        System.out.println("Node " + node.getId() + " drag stopped.");
+      public void nodeDragStopped(Collection<Node> nodes, MouseEvent e) {
+        for (Node node : nodes) {
+          nodeDragStopped(node, e);
+        }
         graphPanel.setCursor(Cursor.getDefaultCursor());
       }
 
+      public void nodeDragStopped(Node node, MouseEvent e) {
+        System.out.println("Node " + node.getId() + " drag stopped.");
+      }
+
       @Override
-      public void nodeDragged(Node node, MouseEvent e) {
-        System.out.println("Node " + node.getId() + " dragged.");
+      public void nodeDragged(Collection<Node> nodes, MouseEvent e) {
+        for (Node node : nodes) {
+          // System.out.println("Node " + node.getId() + " dragged.");
+        }
       }
 
       @Override
       public void nodePressed(Node node, MouseEvent e) {
         System.out.println("Node " + node.getId() + " pressed.");
+        // nodeSingleClicked(node, e);
       }
 
       @Override
@@ -232,6 +246,32 @@ public class Sample {
     });
     KeyStroke delete = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
     inputMap.put(delete, "RemoveSelected");
+
+    graphPanel.getActionMap().put("Undo", new AbstractAction() {
+
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        graphPanel.getHistory().undo();
+        graphPanel.repaint();
+      }
+    });
+    KeyStroke controlZ = KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_MASK);
+    inputMap.put(controlZ, "Undo");
+
+    graphPanel.getActionMap().put("Redo", new AbstractAction() {
+
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        graphPanel.getHistory().redo();
+        graphPanel.repaint();
+      }
+    });
+    KeyStroke controlY = KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_MASK);
+    inputMap.put(controlY, "Redo");
 
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(graphPanel);

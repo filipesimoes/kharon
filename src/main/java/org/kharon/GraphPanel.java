@@ -32,6 +32,7 @@ import java.util.Set;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
+import org.kharon.history.GraphHistory;
 import org.kharon.renderers.EdgeRenderer;
 import org.kharon.renderers.GraphRenderer;
 import org.kharon.renderers.LabelRenderer;
@@ -53,6 +54,9 @@ public class GraphPanel extends JComponent
 
   private List<NodeListener> nodeListeners = new ArrayList<>();
   private List<StageListener> stageListeners = new ArrayList<>();
+
+  private boolean historyEnabled = false;
+  private GraphHistory history;
 
   private boolean showBoundingBoxes = false;
 
@@ -92,6 +96,7 @@ public class GraphPanel extends JComponent
   public GraphPanel(Graph graph) {
     super();
     this.graph = graph;
+    this.history = new GraphHistory(this);
     this.renderContext = new RenderContext(this, graph);
     this.addMouseWheelListener(this);
     this.addMouseMotionListener(this);
@@ -361,21 +366,21 @@ public class GraphPanel extends JComponent
     }
   }
 
-  private void notifyNodeDragStarted(Node node, MouseEvent e) {
+  private void notifyNodeDragStarted(Collection<Node> nodes, MouseEvent e) {
     for (NodeListener listener : this.nodeListeners) {
-      listener.nodeDragStarted(node, e);
+      listener.nodeDragStarted(nodes, e);
     }
   }
 
-  private void notifyNodeDragStopped(Node node, MouseEvent e) {
+  private void notifyNodeDragStopped(Collection<Node> nodes, MouseEvent e) {
     for (NodeListener listener : this.nodeListeners) {
-      listener.nodeDragStopped(node, e);
+      listener.nodeDragStopped(nodes, e);
     }
   }
 
-  private void notifyNodeDragged(Node node, MouseEvent e) {
+  private void notifyNodeDragged(Collection<Node> nodes, MouseEvent e) {
     for (NodeListener listener : this.nodeListeners) {
-      listener.nodeDragged(node, e);
+      listener.nodeDragged(nodes, e);
     }
   }
 
@@ -535,7 +540,7 @@ public class GraphPanel extends JComponent
     notifyStageDragged(evt);
   }
 
-  private void translateStage(double x, double y) {
+  public void translateStage(double x, double y) {
     this.transform.translate(x, y);
 
     try {
@@ -564,9 +569,9 @@ public class GraphPanel extends JComponent
       node.setX(x);
       node.setY(y);
 
-      notifyNodeDragged(node, evt);
     }
-
+    nodes.add(nodeUnderMouse);
+    notifyNodeDragged(nodes, evt);
   }
 
   private void dragNode(MouseEvent evt) {
@@ -576,8 +581,7 @@ public class GraphPanel extends JComponent
 
     nodeUnderMouse.setX(x);
     nodeUnderMouse.setY(y);
-
-    notifyNodeDragged(nodeUnderMouse, evt);
+    notifyNodeDragged(Arrays.asList(this.nodeUnderMouse), evt);
   }
 
   private void startDrag(MouseEvent e) {
@@ -597,10 +601,15 @@ public class GraphPanel extends JComponent
       if (this.nodeDragMode == NodeDragMode.SELECTION) {
         this.liveNodes.addAll(selectedNodes);
         this.idleNodes.removeAll(selectedNodes);
+
+        Set<Node> nodes = this.graph.getNodes(selectedNodes);
+        nodes.add(nodeUnderMouse);
+        notifyNodeDragStarted(nodes, e);
+      } else if (this.nodeDragMode == NodeDragMode.CURRENT) {
+        notifyNodeDragStarted(Arrays.asList(this.nodeUnderMouse), e);
       }
       resetBuffer();
 
-      notifyNodeDragStarted(nodeUnderMouse, e);
     } else {
       notifyStageDragStarted(e);
     }
@@ -614,7 +623,13 @@ public class GraphPanel extends JComponent
       }
 
       if (nodeUnderMouse != null) {
-        notifyNodeDragStopped(nodeUnderMouse, e);
+        if (this.nodeDragMode == NodeDragMode.SELECTION) {
+          Set<Node> nodes = this.graph.getNodes(selectedNodes);
+          nodes.add(nodeUnderMouse);
+          notifyNodeDragStopped(nodes, e);
+        } else if (this.nodeDragMode == NodeDragMode.CURRENT) {
+          notifyNodeDragStopped(Arrays.asList(this.nodeUnderMouse), e);
+        }
 
         this.idleNodes.addAll(this.liveNodes);
         this.liveNodes.clear();
@@ -677,6 +692,10 @@ public class GraphPanel extends JComponent
     return selectedNodes;
   }
 
+  public boolean isNodeUnderMouse(Node node) {
+    return this.nodeUnderMouse != null && this.nodeUnderMouse.getId().equals(node.getId());
+  }
+
   public boolean isNodeSelected(Node node) {
     return this.selectedNodes.contains(node.getId());
   }
@@ -693,9 +712,7 @@ public class GraphPanel extends JComponent
 
   public void removeNodes(Set<String> ids) {
     Set<Node> nodes = this.graph.getNodes(ids);
-    for (Node node : nodes) {
-      this.graph.removeNode(node);
-    }
+    this.graph.removeNodes(nodes);
     repaint();
   }
 
@@ -754,30 +771,31 @@ public class GraphPanel extends JComponent
     repaint();
   }
 
-  @Override
-  public void nodeAdded(Node node) {
-    this.idleNodes.add(node.getId());
-    resetBuffer();
+  public void nodesAdded(GraphEvent e) {
+    for (Node node : e.getNodes()) {
+      this.idleNodes.add(node.getId());
+    }
+  }
+
+  public void nodesRemoved(GraphEvent e) {
+    for (Node node : e.getNodes()) {
+      String nodeId = node.getId();
+      this.selectedNodes.remove(nodeId);
+      this.boxesIndex.remove(nodeId);
+      this.liveNodes.remove(nodeId);
+      this.idleNodes.remove(nodeId);
+    }
+
   }
 
   @Override
-  public void nodeRemoved(Node node) {
-    String nodeId = node.getId();
-    this.selectedNodes.remove(nodeId);
-    this.boxesIndex.remove(nodeId);
-    this.liveNodes.remove(nodeId);
-    this.idleNodes.remove(nodeId);
-
+  public void elementsAdded(GraphEvent e) {
+    nodesAdded(e);
     resetBuffer();
   }
 
-  @Override
-  public void edgeAdded(Edge edge) {
-    resetBuffer();
-  }
-
-  @Override
-  public void edgeRemoved(Edge edge) {
+  public void elementsRemoved(GraphEvent e) {
+    nodesRemoved(e);
     resetBuffer();
   }
 
@@ -797,7 +815,7 @@ public class GraphPanel extends JComponent
     this.nodeDragMode = nodeDragMode;
   }
 
-  private void resetBuffer() {
+  public void resetBuffer() {
     if (this.idleGraphics != null) {
       this.idleGraphics.dispose();
     }
@@ -840,6 +858,26 @@ public class GraphPanel extends JComponent
     resetBuffer();
     super.printComponent(g);
     this.isPrinting = false;
+  }
+
+  public boolean isHistoryEnabled() {
+    return historyEnabled;
+  }
+
+  public void setHistoryEnabled(boolean historyEnabled) {
+    this.historyEnabled = historyEnabled;
+    if (historyEnabled) {
+      this.addNodeListener(history.getMoveRecorder());
+      this.graph.addListener(history.getGraphRecorder());
+    } else {
+      history.clear();
+      this.removeNodeListener(history.getMoveRecorder());
+      this.graph.removeListener(history.getGraphRecorder());
+    }
+  }
+
+  public GraphHistory getHistory() {
+    return history;
   }
 
 }

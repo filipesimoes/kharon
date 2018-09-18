@@ -27,11 +27,11 @@ public class DefaultLabelRenderer implements LabelRenderer {
   @Override
   public GraphShape render(Graphics g, Node node, RenderContext renderContext) {
     String label = node.getLabel();
-    if (label.length() + 3 > maxLength) {
-      label = label.substring(0, (maxLength / 2) - 3) + "..." + label.substring(label.length() - (maxLength / 2));
-    }
 
     if (label != null) {
+      if (label.length() + 3 > maxLength) {
+        label = label.substring(0, (maxLength / 2) - 3) + "..." + label.substring(label.length() - (maxLength / 2));
+      }
       Font font = g.getFont();
       FontMetrics fontMetrics = g.getFontMetrics(font);
 
