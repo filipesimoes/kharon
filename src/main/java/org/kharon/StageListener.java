@@ -10,7 +10,7 @@ public interface StageListener {
 
   void stageDragStopped(MouseEvent e);
 
-  void stageDragged(MouseEvent e);
+  void stageMoved(double x, double y);
 
   void stageZoomChanged(double d);
 

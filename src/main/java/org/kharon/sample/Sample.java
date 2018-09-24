@@ -44,14 +44,14 @@ public class Sample {
 
     Graph graph = new Graph();
 
-    int totalNodes = 4;
+    int totalNodes = 40;
     Node[] nodes = new Node[totalNodes + 1];
 
     for (int i = 0; i < totalNodes; i++) {
       Node node = new Node("" + i);
       node.setLabel("Node " + i);
-      node.setX(50 + (int) (Math.random() * 1000));
-      node.setY(50 + (int) (Math.random() * 600));
+      node.setX(50 + (int) (Math.random() * 2000));
+      node.setY(50 + (int) (Math.random() * 1000));
       node.setType("bug");
       node.setSize(30);
       graph.addNode(node);
@@ -144,7 +144,7 @@ public class Sample {
       @Override
       public void nodeDragged(Collection<Node> nodes, MouseEvent e) {
         for (Node node : nodes) {
-          // System.out.println("Node " + node.getId() + " dragged.");
+          System.out.println("Node " + node.getId() + " dragged.");
         }
       }
 
@@ -178,7 +178,7 @@ public class Sample {
       }
 
       @Override
-      public void stageDragged(MouseEvent e) {
+      public void stageMoved(double x, double y) {
         System.out.println("Stage dragged.");
       }
 
@@ -284,15 +284,15 @@ public class Sample {
     inputMap.put(controlY, "Redo");
 
     KeyStroke control0 = KeyStroke.getKeyStroke(KeyEvent.VK_0, InputEvent.CTRL_MASK);
-    inputMap.put(control0, "Reset");
+    inputMap.put(control0, "FitToScreen");
 
-    graphPane.getActionMap().put("Reset", new AbstractAction() {
+    graphPane.getActionMap().put("FitToScreen", new AbstractAction() {
 
       private static final long serialVersionUID = 1L;
 
       @Override
       public void actionPerformed(ActionEvent e) {
-        graphPane.reset();
+        graphPane.fitToScreen();
         graphWithPreviewPane.repaint();
       }
     });
@@ -310,6 +310,7 @@ public class Sample {
     frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
     // frame.setUndecorated(true);
     frame.setVisible(true);
+    // graphPane.fitToScreen();
   }
 
 }

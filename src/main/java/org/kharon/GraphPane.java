@@ -15,6 +15,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Dimension2D;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -337,9 +338,9 @@ public class GraphPane extends JComponent
     }
   }
 
-  private void notifyStageDragged(MouseEvent e) {
+  private void notifyStageMoved() {
     for (StageListener stageListener : this.stageListeners) {
-      stageListener.stageDragged(e);
+      stageListener.stageMoved(getTranslateX(), getTranslateY());
     }
   }
 
@@ -496,6 +497,12 @@ public class GraphPane extends JComponent
   }
 
   public void setZoom(double zoom) {
+    zoom = Math.min(zoom, MAX_ZOOM);
+    zoom = Math.max(zoom, MIN_ZOOM);
+    setGraphZoom(zoom);
+  }
+
+  protected void setGraphZoom(double zoom) {
     double oldZoom = getZoom();
 
     double translateX = this.getTranslateX();
@@ -561,7 +568,6 @@ public class GraphPane extends JComponent
     double stageOffsetY = y - this.startDragY;
 
     translateStage(stageOffsetX, stageOffsetY);
-    notifyStageDragged(evt);
   }
 
   protected void centerStageAt(Point2D point) {
@@ -598,6 +604,7 @@ public class GraphPane extends JComponent
     } catch (NoninvertibleTransformException e) {
       throw new RuntimeException(e);
     }
+    notifyStageMoved();
     resetBuffer();
   }
 
@@ -705,7 +712,7 @@ public class GraphPane extends JComponent
     }
   }
 
-  private Point2D invert(Point original) {
+  protected Point2D invert(Point original) {
     return this.inverseTransform.transform(original, new Point2D.Double());
   }
 
@@ -991,4 +998,49 @@ public class GraphPane extends JComponent
     this.mouseHoverEnabled = mouseHoverEnabled;
   }
 
+  public void fitToScreen() {
+    fitToScreen(1.1d);
+  }
+
+  public void fitToScreen(double gapWeight) {
+    Rectangle2D minimumBoundingBox = getMinimumBoundingBox();
+    if (minimumBoundingBox != null) {
+
+      double width = minimumBoundingBox.getWidth();
+      double height = minimumBoundingBox.getHeight();
+
+      double x = minimumBoundingBox.getX() - width * (gapWeight - 1d) / 2d;
+      double y = minimumBoundingBox.getY() - height * (gapWeight - 1d) / 2d;
+      width = width * gapWeight;
+      height = height * gapWeight;
+
+      fitToScreen(new Rectangle2D.Double(x, y, width, height), MIN_ZOOM, MAX_ZOOM);
+    }
+  }
+
+  protected void fitToScreen(Rectangle2D minimumBoundingBox) {
+    fitToScreen(minimumBoundingBox, 0d, java.lang.Double.MAX_VALUE);
+  }
+
+  protected void fitToScreen(Rectangle2D minimumBoundingBox, double minZoom, double maxZoom) {
+    Dimension2D size = getSize();
+
+    double graphWidth = minimumBoundingBox.getWidth();
+    double previewWidth = size.getWidth();
+
+    double zoomFactorWidth = 0.9d * previewWidth / graphWidth;
+
+    double graphHeight = minimumBoundingBox.getHeight();
+    double previewHeight = size.getHeight();
+
+    double zoomFactorHeight = 0.9d * previewHeight / graphHeight;
+
+    double zoom = Math.min(zoomFactorWidth, zoomFactorHeight);
+    setGraphZoom(zoom);
+
+    double centerX = minimumBoundingBox.getCenterX();
+    double centerY = minimumBoundingBox.getCenterY();
+
+    centerStageAt(centerX, centerY);
+  }
 }

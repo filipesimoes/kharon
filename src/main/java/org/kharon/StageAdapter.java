@@ -14,7 +14,7 @@ public abstract class StageAdapter implements StageListener {
   public void stageDragStopped(MouseEvent e) { }
 
   @Override
-  public void stageDragged(MouseEvent e) { }
+  public void stageMoved(double x, double y) { }
 
   @Override
   public void stageZoomChanged(double d) { }

@@ -5,8 +5,10 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Dimension2D;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Collection;
 
@@ -43,6 +45,10 @@ public class GraphPreviewPane extends GraphPane {
     PreviewComponentListener previewComponentListener = new PreviewComponentListener();
     this.graphPane.addComponentListener(previewComponentListener);
     this.addComponentListener(previewComponentListener);
+
+    PreviewMouseListener previewMouseListener = new PreviewMouseListener();
+    this.addMouseListener(previewMouseListener);
+    this.addMouseMotionListener(previewMouseListener);
   }
 
   private void initPreviewPane() {
@@ -74,6 +80,26 @@ public class GraphPreviewPane extends GraphPane {
     @Override
     public GraphShape render(Graphics g, Node node, RenderContext renderContext) {
       return null;
+    }
+
+  }
+
+  private class PreviewMouseListener extends MouseAdapter {
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+      mouveGraphStage(e);
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+      mouveGraphStage(e);
+    }
+
+    private void mouveGraphStage(MouseEvent e) {
+      Point2D point = invert(e.getPoint());
+      graphPane.centerStageAt(point);
+      graphPane.repaint();
     }
 
   }
@@ -127,7 +153,7 @@ public class GraphPreviewPane extends GraphPane {
   private class PreviewStageListener extends StageAdapter {
 
     @Override
-    public void stageDragged(MouseEvent e) {
+    public void stageMoved(double x, double y) {
       setViewingWindow();
     }
 
@@ -150,26 +176,12 @@ public class GraphPreviewPane extends GraphPane {
 
     stageViewingWindow = new Rectangle2D.Double(stageX, stageY, stageWidth, stageHeight);
 
-    Dimension2D size = getSize();
-    Rectangle2D minimumBoundingBox = graphPane.getMinimumBoundingBox().createUnion(stageViewingWindow);
+    Rectangle2D minimumBoundingBox = graphPane.getMinimumBoundingBox();
+    if (minimumBoundingBox != null) {
+      minimumBoundingBox = minimumBoundingBox.createUnion(stageViewingWindow);
 
-    double graphWidth = minimumBoundingBox.getWidth();
-    double previewWidth = size.getWidth();
-
-    double zoomFactorWidth = 0.9d * previewWidth / graphWidth;
-
-    double graphHeight = minimumBoundingBox.getHeight();
-    double previewHeight = size.getHeight();
-
-    double zoomFactorHeight = 0.9d * previewHeight / graphHeight;
-
-    double zoom = Math.min(zoomFactorWidth, zoomFactorHeight);
-    setZoom(zoom);
-
-    double centerX = minimumBoundingBox.getCenterX();
-    double centerY = minimumBoundingBox.getCenterY();
-
-    centerStageAt(centerX, centerY);
+      fitToScreen(minimumBoundingBox);
+    }
     stageViewingWindow = transform(stageViewingWindow).getBounds2D();
 
   }
