@@ -1036,6 +1036,10 @@ public class GraphPane extends JComponent
     double zoomFactorHeight = 0.9d * previewHeight / graphHeight;
 
     double zoom = Math.min(zoomFactorWidth, zoomFactorHeight);
+
+    zoom = Math.min(zoom, MAX_ZOOM);
+    zoom = Math.max(zoom, MIN_ZOOM);
+
     setGraphZoom(zoom);
 
     double centerX = minimumBoundingBox.getCenterX();

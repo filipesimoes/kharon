@@ -179,7 +179,6 @@ public class GraphPreviewPane extends GraphPane {
     Rectangle2D minimumBoundingBox = graphPane.getMinimumBoundingBox();
     if (minimumBoundingBox != null) {
       minimumBoundingBox = minimumBoundingBox.createUnion(stageViewingWindow);
-
       fitToScreen(minimumBoundingBox);
     }
     stageViewingWindow = transform(stageViewingWindow).getBounds2D();
