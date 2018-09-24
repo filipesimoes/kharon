@@ -1,6 +1,7 @@
 package org.kharon;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -24,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -42,12 +44,15 @@ import org.kharon.renderers.RenderContext;
 import org.kharon.renderers.Renderers;
 import org.kharon.renderers.SelectionRenderer;
 
-public class GraphPanel extends JComponent
+public class GraphPane extends JComponent
     implements MouseListener, MouseWheelListener, MouseMotionListener, GraphListener, ComponentListener {
 
   private static final long serialVersionUID = 3827345534868023684L;
 
   private Graph graph;
+
+  private Renderers renderers = new Renderers();
+
   private StageMode stageMode = StageMode.PAN;
   private NodeDragMode nodeDragMode = NodeDragMode.SELECTION;
   private RenderContext renderContext;
@@ -68,8 +73,8 @@ public class GraphPanel extends JComponent
   private boolean isDragging = false;
   private Node nodeUnderMouse = null;
 
-  private AffineTransform transform = new AffineTransform();
-  private AffineTransform inverseTransform = new AffineTransform();
+  protected AffineTransform transform = new AffineTransform();
+  protected AffineTransform inverseTransform = new AffineTransform();
 
   private int startDragX;
   private int startDragY;
@@ -93,7 +98,7 @@ public class GraphPanel extends JComponent
 
   private boolean isPrinting;
 
-  public GraphPanel(Graph graph) {
+  public GraphPane(Graph graph) {
     super();
     this.graph = graph;
     this.history = new GraphHistory(this);
@@ -156,7 +161,7 @@ public class GraphPanel extends JComponent
       this.lastBufferY = originY;
     }
 
-    GraphRenderer graphRenderer = Renderers.getGraphRenderer(this.graph.getType());
+    GraphRenderer graphRenderer = renderers.getGraphRenderer(this.graph.getType());
     graphRenderer.render(liveGraphics, this.graph);
 
     Set<Edge> liveEdges = graph.getNodesEdges(this.liveNodes);
@@ -176,7 +181,7 @@ public class GraphPanel extends JComponent
     if (hoveredNode != null && !isPrinting) {
       NodeBoundingBox box = this.boxesIndex.get(hoveredNode.getId());
       if (box != null) {
-        NodeHoverRenderer renderer = Renderers.getNodeHoverRenderer("default");
+        NodeHoverRenderer renderer = renderers.getNodeHoverRenderer("default");
         GraphShape graphShape = renderer.render(g2d, box, renderContext);
         graphShape.draw(g2d, tx);
         paintNodes(liveGraphics, graphTransformation, currentTransform, clipBounds, Arrays.asList(hoveredNode));
@@ -208,7 +213,7 @@ public class GraphPanel extends JComponent
       Node node = this.graph.getNode(selectedId);
       NodeBoundingBox boundingBox = this.boxesIndex.get(node.getId());
       if (boundingBox.intersects(clipBounds)) {
-        SelectionRenderer renderer = Renderers.getSelectionRenderer(node.getSelectionType());
+        SelectionRenderer renderer = renderers.getSelectionRenderer(node.getSelectionType());
         GraphShape selectionGraphShape = renderer.render(g2d, boundingBox, renderContext);
         if (selectionGraphShape != null) {
           selectionGraphShape.draw(g2d, tx);
@@ -235,7 +240,7 @@ public class GraphPanel extends JComponent
         nodeBoundingBox.clear();
       }
 
-      NodeRenderer renderer = Renderers.getNodeRenderer(node.getType());
+      NodeRenderer renderer = renderers.getNodeRenderer(node.getType());
       GraphShape nodeGraphShape = renderer.render(g2d, node, renderContext);
       if (nodeGraphShape != null && nodeGraphShape.getShape().intersects(clipBounds)) {
         nodeGraphShape.draw(g2d, stageTx);
@@ -246,7 +251,7 @@ public class GraphPanel extends JComponent
         }
       }
 
-      LabelRenderer labelRenderer = Renderers.getLabelRenderer(node.getLabelType());
+      LabelRenderer labelRenderer = renderers.getLabelRenderer(node.getLabelType());
       GraphShape labelGraphShape = labelRenderer.render(g2d, node, renderContext);
       if (labelGraphShape != null && labelGraphShape.getShape().intersects(clipBounds)) {
         labelGraphShape.draw(g2d, stageTx);
@@ -261,7 +266,7 @@ public class GraphPanel extends JComponent
 
   private void paintEdges(Graphics2D g2d, AffineTransform tx, Rectangle2D clipBounds, Collection<Edge> edges) {
     for (Edge edge : edges) {
-      EdgeRenderer renderer = Renderers.getEdgeRenderer(edge.getType());
+      EdgeRenderer renderer = renderers.getEdgeRenderer(edge.getType());
       GraphShape graphShape = renderer.render(g2d, edge, renderContext);
       if (graphShape != null && graphShape.getShape().intersects(clipBounds)) {
         graphShape.draw(g2d, tx);
@@ -312,9 +317,9 @@ public class GraphPanel extends JComponent
     }
   }
 
-  private void notifyZoomChanged(MouseWheelEvent e) {
+  private void notifyZoomChanged() {
     for (StageListener stageListener : this.stageListeners) {
-      stageListener.stageZoomChanged(e);
+      stageListener.stageZoomChanged(getZoom());
     }
   }
 
@@ -444,6 +449,19 @@ public class GraphPanel extends JComponent
     }
   }
 
+  protected Point2D getCenter() {
+
+    Dimension size = getSize();
+    double widthOffset = size.width / 2d;
+    double heightOffset = size.height / 2d;
+
+    double zoom = getZoom();
+    double x = getTranslateX() + widthOffset / zoom;
+    double y = getTranslateY() + heightOffset / zoom;
+
+    return new Point2D.Double(x, y);
+  }
+
   @Override
   public void mouseWheelMoved(MouseWheelEvent e) {
     if (this.isEnabled()) {
@@ -455,7 +473,6 @@ public class GraphPanel extends JComponent
 
       if (zoom != newZoom) {
         setZoom(newZoom);
-        notifyZoomChanged(e);
         repaint();
       }
     }
@@ -477,15 +494,20 @@ public class GraphPanel extends JComponent
   }
 
   public void setZoom(double zoom) {
-    double translateX = this.transform.getTranslateX();
-    double translateY = this.transform.getTranslateY();
+    double oldZoom = getZoom();
+
+    double translateX = this.getTranslateX();
+    double translateY = this.getTranslateY();
+
     this.transform.setToScale(zoom, zoom);
-    this.transform.translate(translateX, translateY);
+    this.transform.translate(translateX / oldZoom, translateY / oldZoom);
+
     try {
       this.inverseTransform = this.transform.createInverse();
     } catch (NoninvertibleTransformException e) {
       throw new RuntimeException(e);
     }
+    notifyZoomChanged();
     resetBuffer();
   }
 
@@ -498,7 +520,7 @@ public class GraphPanel extends JComponent
       if (nodeUnderMouse != null) {
         if (this.nodeDragMode == NodeDragMode.CURRENT) {
           dragNode(evt);
-        } else {
+        } else if (this.nodeDragMode == NodeDragMode.SELECTION) {
           dragSelectedNodes(evt);
         }
         repaint();
@@ -540,6 +562,32 @@ public class GraphPanel extends JComponent
     notifyStageDragged(evt);
   }
 
+  protected void centerStageAt(Point2D point) {
+    centerStageAt(point.getX(), point.getY());
+  }
+
+  public void centerStageAt(double newCenterX, double newCenterY) {
+    double zoom = getZoom();
+
+    newCenterX = newCenterX * zoom;
+    newCenterY = newCenterY * zoom;
+
+    Dimension size = getSize();
+    double widthOffset = size.width / 2d;
+    double heightOffset = size.height / 2d;
+
+    double newX = widthOffset - newCenterX - getTranslateX();
+    double newY = heightOffset - newCenterY - getTranslateY();
+
+    translateStage(newX / zoom, newY / zoom);
+  }
+
+  public void moveStageTo(double x, double y) {
+    x = x - getTranslateX();
+    y = y - getTranslateY();
+    translateStage(x, y);
+  }
+
   public void translateStage(double x, double y) {
     this.transform.translate(x, y);
 
@@ -549,6 +597,18 @@ public class GraphPanel extends JComponent
       throw new RuntimeException(e);
     }
     resetBuffer();
+  }
+
+  protected double getTranslateX() {
+    return this.transform.getTranslateX();
+  }
+
+  protected double getTranslateY() {
+    return this.transform.getTranslateY();
+  }
+
+  public void toOrigin() {
+    moveStageTo(0, 0);
   }
 
   private void dragSelectedNodes(MouseEvent evt) {
@@ -878,6 +938,45 @@ public class GraphPanel extends JComponent
 
   public GraphHistory getHistory() {
     return history;
+  }
+
+  public Renderers getRenderers() {
+    return renderers;
+  }
+
+  public Rectangle2D getMinimumBoundingBox() {
+
+    Rectangle2D box = null;
+    Set<Node> nodes = graph.getNodes();
+
+    Iterator<Node> iterator = nodes.iterator();
+    if (iterator.hasNext()) {
+
+      Node node = iterator.next();
+      String type = node.getType();
+      NodeRenderer nodeRenderer = renderers.getNodeRenderer(type);
+      GraphShape graphShape = nodeRenderer.render(null, node, renderContext);
+      box = graphShape.getShape().getBounds2D();
+
+      while (iterator.hasNext()) {
+        node = iterator.next();
+        type = node.getType();
+        nodeRenderer = renderers.getNodeRenderer(type);
+
+        graphShape = nodeRenderer.render(null, node, renderContext);
+        Rectangle2D newBox = graphShape.getShape().getBounds2D();
+
+        box = box.createUnion(newBox);
+
+      }
+    }
+
+    return box;
+  }
+
+  public void reset() {
+    toOrigin();
+    setZoom(1d);
   }
 
 }

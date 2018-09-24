@@ -3,7 +3,7 @@ package org.kharon;
 import java.awt.Color;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Node {
+public class Node implements Cloneable {
 
   private String id;
   private String label;
@@ -20,6 +20,10 @@ public class Node {
   private Color labelColor;
 
   private AtomicInteger degree = new AtomicInteger(0);
+
+  private Node() {
+    super();
+  }
 
   public Node(String id) {
     super();
@@ -137,6 +141,29 @@ public class Node {
     } else if (!id.equals(other.id))
       return false;
     return true;
+  }
+
+  @Override
+  protected Object clone() throws CloneNotSupportedException {
+    Node clone = new Node();
+
+    clone.id = id;
+    clone.label = label;
+
+    clone.type = type;
+    clone.labelType = labelType;
+    clone.selectionType = selectionType;
+
+    clone.x = x;
+    clone.y = y;
+    clone.size = size;
+
+    clone.color = color;
+    clone.labelColor = labelColor;
+
+    clone.degree = new AtomicInteger(degree.get());
+
+    return clone;
   }
 
 }

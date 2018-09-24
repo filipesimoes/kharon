@@ -3,7 +3,7 @@ package org.kharon.history;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.kharon.GraphPanel;
+import org.kharon.GraphPane;
 
 public class GraphHistory {
 
@@ -13,14 +13,14 @@ public class GraphHistory {
 
   private int position = -1;
 
-  private GraphPanel graphPanel;
+  private GraphPane graphPanel;
 
   private NodeMoveRecorder moveRecorder;
   private GraphRecorder graphRecorder;
 
   private List<GraphHistoryListener> listeners = new ArrayList<>();
 
-  public GraphHistory(GraphPanel graphPanel, int maxSize) {
+  public GraphHistory(GraphPane graphPanel, int maxSize) {
     super();
     this.maxSize = maxSize;
     this.graphPanel = graphPanel;
@@ -28,7 +28,7 @@ public class GraphHistory {
     this.graphRecorder = new GraphRecorder(this);
   }
 
-  public GraphHistory(GraphPanel graphPanel) {
+  public GraphHistory(GraphPane graphPanel) {
     this(graphPanel, 50);
   }
 

@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import org.kharon.Edge;
 import org.kharon.Graph;
-import org.kharon.GraphPanel;
+import org.kharon.GraphPane;
 import org.kharon.Node;
 
 public class AddElementAction implements GraphAction {
@@ -19,13 +19,13 @@ public class AddElementAction implements GraphAction {
   }
 
   @Override
-  public void undo(GraphPanel graphPanel) {
+  public void undo(GraphPane graphPanel) {
     Graph graph = graphPanel.getGraph();
     graph.removeElements(this, newNodes, newEdges);
   }
 
   @Override
-  public void redo(GraphPanel graphPanel) {
+  public void redo(GraphPane graphPanel) {
     Graph graph = graphPanel.getGraph();
     graph.addElements(this, newNodes, newEdges);
   }

@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class Graph {
+public class Graph implements Cloneable {
 
   private String type = "default";
 
@@ -253,12 +253,16 @@ public class Graph {
     }
   }
 
-  private static class NodeHolder {
+  private static class NodeHolder implements Cloneable {
 
     private Node node;
 
     private Map<String, Edge> incoming = new HashMap<>();
     private Map<String, Edge> outcoming = new HashMap<>();
+
+    private NodeHolder() {
+      super();
+    }
 
     public NodeHolder(Node node) {
       super();
@@ -291,6 +295,30 @@ public class Graph {
       return node;
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+      NodeHolder clone = new NodeHolder();
+
+      clone.node = (Node) node.clone();
+
+      clone.incoming = (Map<String, Edge>) ((HashMap<String, Edge>) incoming).clone();
+      clone.outcoming = (Map<String, Edge>) ((HashMap<String, Edge>) incoming).clone();
+
+      return clone;
+    }
+
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  protected Object clone() throws CloneNotSupportedException {
+    Graph clone = new Graph();
+    clone.type = type;
+    clone.settings = (GraphSettings) settings.clone();
+    clone.edgeIndex = (Map<String, Edge>) ((HashMap<String, Edge>) edgeIndex).clone();
+    clone.nodeIndex = (Map<String, NodeHolder>) ((HashMap<String, NodeHolder>) nodeIndex).clone();
+    return clone;
   }
 
 }

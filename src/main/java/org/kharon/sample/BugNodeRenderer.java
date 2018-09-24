@@ -16,6 +16,7 @@ import org.kharon.renderers.ShapeNodeRenderer;
  */
 public class BugNodeRenderer extends ShapeNodeRenderer {
 
+  @Override
   public Shape drawShape(Node node, RenderContext renderContext) {
     Shape shape = new GeneralPath();
     ((GeneralPath) shape).moveTo(3.5, 0.0);

@@ -8,7 +8,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +25,9 @@ import javax.swing.KeyStroke;
 
 import org.kharon.Edge;
 import org.kharon.Graph;
-import org.kharon.GraphPanel;
+import org.kharon.GraphPane;
+import org.kharon.GraphPreviewPane;
+import org.kharon.GraphWithPreviewPane;
 import org.kharon.Node;
 import org.kharon.NodeListener;
 import org.kharon.StageListener;
@@ -41,11 +42,9 @@ public class Sample {
 
   public static void show() throws URISyntaxException {
 
-    Renderers.registerNodeRenderer("bug", new BugNodeRenderer());
-
     Graph graph = new Graph();
 
-    int totalNodes = 10;
+    int totalNodes = 4;
     Node[] nodes = new Node[totalNodes + 1];
 
     for (int i = 0; i < totalNodes; i++) {
@@ -81,10 +80,21 @@ public class Sample {
     frame.setLayout(new BorderLayout());
     frame.setPreferredSize(new Dimension(200, 200));
 
-    final GraphPanel graphPanel = new GraphPanel(graph);
-    graphPanel.setBackground(Color.WHITE);
-    graphPanel.setHistoryEnabled(true);
-    graphPanel.addNodeListener(new NodeListener() {
+    GraphWithPreviewPane graphWithPreviewPane = new GraphWithPreviewPane(graph);
+
+    GraphPreviewPane previewPane = graphWithPreviewPane.getPreviewPane();
+    previewPane.setMinimumSize(new Dimension(200, 200));
+    previewPane.setMaximumSize(new Dimension(300, 300));
+
+    final GraphPane graphPane = graphWithPreviewPane.getGraphPane();
+    graphPane.setBackground(Color.WHITE);
+    graphPane.setHistoryEnabled(true);
+
+    Renderers renderers = graphPane.getRenderers();
+
+    renderers.registerNodeRenderer("bug", new BugNodeRenderer());
+
+    graphPane.addNodeListener(new NodeListener() {
       @Override
       public void nodeClicked(Node node, MouseEvent e) {
         System.out.println("Node " + node.getId() + " clicked.");
@@ -96,27 +106,27 @@ public class Sample {
       }
 
       private void nodeSingleClicked(Node node, MouseEvent e) {
-        boolean selected = graphPanel.isNodeSelected(node);
+        boolean selected = graphPane.isNodeSelected(node);
         boolean keepSelection = e.isControlDown() || e.isShiftDown();
         if (!selected) {
-          graphPanel.selectNode(node.getId(), keepSelection);
+          graphPane.selectNode(node.getId(), keepSelection);
         } else if (keepSelection) {
-          graphPanel.deselectNode(node.getId());
+          graphPane.deselectNode(node.getId());
         } else {
-          graphPanel.selectNode(node.getId());
+          graphPane.selectNode(node.getId());
         }
       }
 
       @Override
       public void nodeDragStarted(Collection<Node> nodes, MouseEvent e) {
         for (Node node : nodes) {
-          if (graphPanel.isNodeUnderMouse(node)) {
-            boolean keepSelection = graphPanel.isNodeSelected(node);
-            graphPanel.selectNode(node.getId(), keepSelection);
+          if (graphPane.isNodeUnderMouse(node)) {
+            boolean keepSelection = graphPane.isNodeSelected(node);
+            graphPane.selectNode(node.getId(), keepSelection);
           }
           System.out.println("Node " + node.getId() + " drag started");
         }
-        graphPanel.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+        graphPane.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
       }
 
       @Override
@@ -124,7 +134,7 @@ public class Sample {
         for (Node node : nodes) {
           nodeDragStopped(node, e);
         }
-        graphPanel.setCursor(Cursor.getDefaultCursor());
+        graphPane.setCursor(Cursor.getDefaultCursor());
       }
 
       public void nodeDragStopped(Node node, MouseEvent e) {
@@ -151,20 +161,20 @@ public class Sample {
 
       @Override
       public void nodeHover(Node node, MouseEvent e) {
-        graphPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        graphPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
 
       @Override
       public void nodeOut(MouseEvent e) {
-        graphPanel.setCursor(Cursor.getDefaultCursor());
+        graphPane.setCursor(Cursor.getDefaultCursor());
       }
     });
 
-    graphPanel.addStageListener(new StageListener() {
+    graphPane.addStageListener(new StageListener() {
 
       @Override
-      public void stageZoomChanged(MouseWheelEvent e) {
-        System.out.println("Zoom changed " + graphPanel.getZoom());
+      public void stageZoomChanged(double zoom) {
+        System.out.println("Zoom changed " + zoom);
       }
 
       @Override
@@ -175,51 +185,51 @@ public class Sample {
       @Override
       public void stageDragStopped(MouseEvent e) {
         System.out.println("Stage drag stopped.");
-        graphPanel.setCursor(Cursor.getDefaultCursor());
-        graphPanel.setStageMode(StageMode.PAN);
+        graphPane.setCursor(Cursor.getDefaultCursor());
+        graphPane.setStageMode(StageMode.PAN);
       }
 
       @Override
       public void stageDragStarted(MouseEvent e) {
         System.out.println("Stage drag started.");
         if (e.isControlDown() || e.isShiftDown()) {
-          graphPanel.setStageMode(StageMode.SELECTION);
+          graphPane.setStageMode(StageMode.SELECTION);
         } else {
-          graphPanel.setStageMode(StageMode.PAN);
-          graphPanel.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+          graphPane.setStageMode(StageMode.PAN);
+          graphPane.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
         }
       }
 
       @Override
       public void stageClicked(MouseEvent e) {
         System.out.println("Stage clicked.");
-        graphPanel.deselectAll();
+        graphPane.deselectAll();
       }
     });
 
-    graphPanel.getActionMap().put("SelectAll", new AbstractAction() {
+    graphPane.getActionMap().put("SelectAll", new AbstractAction() {
 
       private static final long serialVersionUID = 1L;
 
       @Override
       public void actionPerformed(ActionEvent e) {
-        graphPanel.selectAll();
+        graphPane.selectAll();
       }
     });
     KeyStroke controlA = KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK);
-    InputMap inputMap = graphPanel.getInputMap();
+    InputMap inputMap = graphPane.getInputMap();
     inputMap.put(controlA, "SelectAll");
 
-    graphPanel.getActionMap().put("SaveImage", new AbstractAction() {
+    graphPane.getActionMap().put("SaveImage", new AbstractAction() {
 
       private static final long serialVersionUID = 1L;
 
       @Override
       public void actionPerformed(ActionEvent e) {
         JFileChooser fileChooser = new JFileChooser();
-        int option = fileChooser.showSaveDialog(graphPanel);
+        int option = fileChooser.showSaveDialog(graphPane);
         if (option == JFileChooser.APPROVE_OPTION) {
-          BufferedImage image = graphPanel.toImage();
+          BufferedImage image = graphPane.toImage();
           File selectedFile = fileChooser.getSelectedFile();
           if (!selectedFile.getName().endsWith(".png")) {
             selectedFile = new File(selectedFile.getParentFile(), selectedFile.getName() + ".png");
@@ -235,46 +245,60 @@ public class Sample {
     KeyStroke controlS = KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK);
     inputMap.put(controlS, "SaveImage");
 
-    graphPanel.getActionMap().put("RemoveSelected", new AbstractAction() {
+    graphPane.getActionMap().put("RemoveSelected", new AbstractAction() {
 
       private static final long serialVersionUID = 1L;
 
       @Override
       public void actionPerformed(ActionEvent e) {
-        graphPanel.removeSelectedNodes();
+        graphPane.removeSelectedNodes();
       }
     });
     KeyStroke delete = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
     inputMap.put(delete, "RemoveSelected");
 
-    graphPanel.getActionMap().put("Undo", new AbstractAction() {
+    graphPane.getActionMap().put("Undo", new AbstractAction() {
 
       private static final long serialVersionUID = 1L;
 
       @Override
       public void actionPerformed(ActionEvent e) {
-        graphPanel.getHistory().undo();
-        graphPanel.repaint();
+        graphPane.getHistory().undo();
+        graphPane.repaint();
       }
     });
     KeyStroke controlZ = KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_MASK);
     inputMap.put(controlZ, "Undo");
 
-    graphPanel.getActionMap().put("Redo", new AbstractAction() {
+    graphPane.getActionMap().put("Redo", new AbstractAction() {
 
       private static final long serialVersionUID = 1L;
 
       @Override
       public void actionPerformed(ActionEvent e) {
-        graphPanel.getHistory().redo();
-        graphPanel.repaint();
+        graphPane.getHistory().redo();
+        graphPane.repaint();
       }
     });
     KeyStroke controlY = KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_MASK);
     inputMap.put(controlY, "Redo");
 
+    KeyStroke control0 = KeyStroke.getKeyStroke(KeyEvent.VK_0, InputEvent.CTRL_MASK);
+    inputMap.put(control0, "Reset");
+
+    graphPane.getActionMap().put("Reset", new AbstractAction() {
+
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        graphPane.reset();
+        graphWithPreviewPane.repaint();
+      }
+    });
+
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(graphPanel);
+    panel.add(graphWithPreviewPane);
 
     frame.add(panel, BorderLayout.CENTER);
     JLabel comp = new JLabel("Kharon");

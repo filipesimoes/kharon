@@ -2,7 +2,7 @@ package org.kharon;
 
 import java.awt.Color;
 
-public class Edge {
+public class Edge implements Cloneable {
 
   private String id;
   private String source;
@@ -10,6 +10,10 @@ public class Edge {
 
   private String type = "default";
   private Color color;
+
+  private Edge() {
+    super();
+  }
 
   public Edge(String id, Node source, Node target) {
     this.id = id;
@@ -71,6 +75,20 @@ public class Edge {
     } else if (!id.equals(other.id))
       return false;
     return true;
+  }
+
+  @Override
+  protected Object clone() throws CloneNotSupportedException {
+    Edge clone = new Edge();
+
+    clone.id = id;
+    clone.source = source;
+    clone.target = target;
+
+    clone.type = type;
+    clone.color = color;
+
+    return clone;
   }
 
 }

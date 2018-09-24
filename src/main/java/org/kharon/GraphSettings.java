@@ -2,7 +2,7 @@ package org.kharon;
 
 import java.awt.Color;
 
-public class GraphSettings {
+public class GraphSettings implements Cloneable {
 
   private Color defaultEdgeColor = Color.red;
   private Color defaultNodeColor = Color.blue;
@@ -58,6 +58,21 @@ public class GraphSettings {
 
   public void setNodeHoverColor(Color nodeHoverColor) {
     this.nodeHoverColor = nodeHoverColor;
+  }
+
+  @Override
+  public Object clone() throws CloneNotSupportedException {
+    GraphSettings settings = new GraphSettings();
+
+    settings.defaultEdgeColor = defaultEdgeColor;
+    settings.defaultNodeColor = defaultNodeColor;
+    settings.defaultLabelColor = defaultLabelColor;
+    settings.defaultSelectionColor = defaultSelectionColor;
+
+    settings.selectionColor = selectionColor;
+    settings.nodeHoverColor = nodeHoverColor;
+
+    return settings;
   }
 
 }

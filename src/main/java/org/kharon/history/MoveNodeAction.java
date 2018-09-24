@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.kharon.Graph;
-import org.kharon.GraphPanel;
+import org.kharon.GraphPane;
 import org.kharon.Node;
 
 public class MoveNodeAction implements GraphAction {
@@ -37,16 +37,16 @@ public class MoveNodeAction implements GraphAction {
   }
 
   @Override
-  public void undo(GraphPanel graphPanel) {
+  public void undo(GraphPane graphPanel) {
     act(graphPanel, oldXs, oldYs);
   }
 
   @Override
-  public void redo(GraphPanel graphPanel) {
+  public void redo(GraphPane graphPanel) {
     act(graphPanel, newXs, newYs);
   }
 
-  private void act(GraphPanel graphPanel, List<Integer> xs, List<Integer> ys) {
+  private void act(GraphPane graphPanel, List<Integer> xs, List<Integer> ys) {
     Graph graph = graphPanel.getGraph();
     for (int index = 0; index < xs.size(); index++) {
       String nodeId = nodeIds.get(index);

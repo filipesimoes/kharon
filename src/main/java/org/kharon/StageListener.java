@@ -1,7 +1,6 @@
 package org.kharon;
 
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
 
 public interface StageListener {
 
@@ -13,6 +12,6 @@ public interface StageListener {
 
   void stageDragged(MouseEvent e);
 
-  void stageZoomChanged(MouseWheelEvent e);
+  void stageZoomChanged(double d);
 
 }

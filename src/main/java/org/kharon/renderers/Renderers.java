@@ -5,86 +5,135 @@ import java.util.Map;
 
 public class Renderers {
 
-  private static Map<String, GraphRenderer> graphRenderers;
-  private static Map<String, NodeRenderer> nodeRenderers;
-  private static Map<String, EdgeRenderer> edgeRenderers;
-  private static Map<String, LabelRenderer> labelRenderers;
-  private static Map<String, SelectionRenderer> selectionRenderers;
-  private static Map<String, NodeHoverRenderer> hoverRenderers;
+  public static final String DEFAULT = "default";
 
-  static {
-    graphRenderers = new HashMap<>();
-    graphRenderers.put("default", new DefaultGraphRenderer());
+  private boolean renderUnknownAsDefault = true;
 
-    nodeRenderers = new HashMap<>();
-    SquareNodeRenderer square = new SquareNodeRenderer();
-    nodeRenderers.put("default", square);
-    nodeRenderers.put("square", square);
-    nodeRenderers.put("circle", new CircleNodeRenderer());
+  private Map<String, GraphRenderer> graphRenderers;
+  private Map<String, NodeRenderer> nodeRenderers;
+  private Map<String, EdgeRenderer> edgeRenderers;
+  private Map<String, LabelRenderer> labelRenderers;
+  private Map<String, SelectionRenderer> selectionRenderers;
+  private Map<String, NodeHoverRenderer> hoverRenderers;
 
-    edgeRenderers = new HashMap<>();
-    edgeRenderers.put("default", new DefaultEdgeRenderer());
-
-    labelRenderers = new HashMap<>();
-    labelRenderers.put("default", new DefaultLabelRenderer());
-
-    selectionRenderers = new HashMap<>();
-    selectionRenderers.put("default", new DefaultSelectionRenderer());
-
-    hoverRenderers = new HashMap<>();
-    hoverRenderers.put("default", new DefaultNodeHoverRenderer());
+  public Renderers() {
+    super();
+    initDefaults();
   }
 
-  public static GraphRenderer getGraphRenderer(String type) {
+  private void initDefaults() {
+    graphRenderers = new HashMap<>();
+    graphRenderers.put(DEFAULT, new DefaultGraphRenderer());
+
+    nodeRenderers = new HashMap<>();
+    CircleNodeRenderer circle = new CircleNodeRenderer();
+    nodeRenderers.put(DEFAULT, circle);
+    nodeRenderers.put("circle", circle);
+    nodeRenderers.put("square", new SquareNodeRenderer());
+
+    edgeRenderers = new HashMap<>();
+    edgeRenderers.put(DEFAULT, new DefaultEdgeRenderer());
+
+    labelRenderers = new HashMap<>();
+    labelRenderers.put(DEFAULT, new DefaultLabelRenderer());
+
+    selectionRenderers = new HashMap<>();
+    selectionRenderers.put(DEFAULT, new DefaultSelectionRenderer());
+
+    hoverRenderers = new HashMap<>();
+    hoverRenderers.put(DEFAULT, new DefaultNodeHoverRenderer());
+  }
+
+  public GraphRenderer getGraphRenderer(String type) {
     GraphRenderer graphRenderer = graphRenderers.get(type);
-    if (graphRenderer == null) {
+    if (graphRenderer == null && !renderUnknownAsDefault) {
       throw new IllegalArgumentException("Unknown graph type (" + type + ").");
+    } else if (graphRenderer == null && renderUnknownAsDefault) {
+      graphRenderer = graphRenderers.get(DEFAULT);
     }
     return graphRenderer;
   }
 
-  public static NodeRenderer getNodeRenderer(String type) {
+  public NodeRenderer getNodeRenderer(String type) {
     NodeRenderer nodeRenderer = nodeRenderers.get(type);
-    if (nodeRenderer == null) {
+    if (nodeRenderer == null && !renderUnknownAsDefault) {
       throw new IllegalArgumentException("Unknown node type (" + type + ").");
+    } else if (nodeRenderer == null && renderUnknownAsDefault) {
+      nodeRenderer = nodeRenderers.get(DEFAULT);
     }
     return nodeRenderer;
   }
 
-  public static void registerNodeRenderer(String type, NodeRenderer renderer) {
+  public void registerNodeRenderer(String type, NodeRenderer renderer) {
     nodeRenderers.put(type, renderer);
   }
 
-  public static EdgeRenderer getEdgeRenderer(String type) {
+  public void clearNodeRenderers() {
+    nodeRenderers.clear();
+  }
+
+  public EdgeRenderer getEdgeRenderer(String type) {
     EdgeRenderer edgeRenderer = edgeRenderers.get(type);
-    if (edgeRenderer == null) {
+    if (edgeRenderer == null && !renderUnknownAsDefault) {
       throw new IllegalArgumentException("Unknown edge type (" + type + ").");
+    } else if (edgeRenderer == null && renderUnknownAsDefault) {
+      edgeRenderer = edgeRenderers.get(DEFAULT);
     }
     return edgeRenderer;
   }
 
-  public static LabelRenderer getLabelRenderer(String type) {
+  public void registerEdgeRenderer(String type, EdgeRenderer renderer) {
+    edgeRenderers.put(type, renderer);
+  }
+
+  public void clearEdgeRenderers() {
+    edgeRenderers.clear();
+  }
+
+  public LabelRenderer getLabelRenderer(String type) {
     LabelRenderer labelRenderer = labelRenderers.get(type);
-    if (labelRenderer == null) {
+    if (labelRenderer == null && !renderUnknownAsDefault) {
       throw new IllegalArgumentException("Unknown label type (" + type + ").");
+    } else if (labelRenderer == null && renderUnknownAsDefault) {
+      labelRenderer = labelRenderers.get(DEFAULT);
     }
     return labelRenderer;
   }
 
-  public static SelectionRenderer getSelectionRenderer(String type) {
+  public void clearLabelRenderers() {
+    labelRenderers.clear();
+  }
+
+  public void registerLabelRenderer(String type, LabelRenderer renderer) {
+    labelRenderers.put(type, renderer);
+  }
+
+  public SelectionRenderer getSelectionRenderer(String type) {
     SelectionRenderer selectionRenderer = selectionRenderers.get(type);
-    if (selectionRenderer == null) {
+    if (selectionRenderer == null && !renderUnknownAsDefault) {
       throw new IllegalArgumentException("Unknown selection type (" + type + ").");
+    } else if (selectionRenderer == null && renderUnknownAsDefault) {
+      selectionRenderer = selectionRenderers.get(DEFAULT);
     }
     return selectionRenderer;
   }
 
-  public static NodeHoverRenderer getNodeHoverRenderer(String type) {
+  public NodeHoverRenderer getNodeHoverRenderer(String type) {
     NodeHoverRenderer hoverRenderer = hoverRenderers.get(type);
-    if (hoverRenderer == null) {
+    if (hoverRenderer == null && !renderUnknownAsDefault) {
       throw new IllegalArgumentException("Unknown hover type (" + type + ").");
+    } else if (hoverRenderer == null && renderUnknownAsDefault) {
+      hoverRenderer = hoverRenderers.get(DEFAULT);
     }
     return hoverRenderer;
+  }
+
+  public boolean isRenderUnknownAsDefault() {
+    return renderUnknownAsDefault;
+  }
+
+  public void setRenderUnknownAsDefault(boolean renderUnknownAsDefault) {
+    this.renderUnknownAsDefault = renderUnknownAsDefault;
   }
 
 }

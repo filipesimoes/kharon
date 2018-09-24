@@ -1,11 +1,11 @@
 package org.kharon.history;
 
-import org.kharon.GraphPanel;
+import org.kharon.GraphPane;
 
 public interface GraphAction {
 
-  void undo(GraphPanel graphPanel);
+  void undo(GraphPane graphPanel);
 
-  void redo(GraphPanel graphPanel);
+  void redo(GraphPane graphPanel);
 
 }

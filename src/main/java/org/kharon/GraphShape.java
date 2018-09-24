@@ -47,18 +47,20 @@ public class GraphShape {
 
     Shape txShape = tx.createTransformedShape(shape);
 
-    if (fillPaint != null) {
-      g2d.setPaint(fillPaint);
-      g2d.fill(txShape);
-    } else if (strokePaint != null) {
-      g2d.setPaint(strokePaint);
-      g2d.draw(txShape);
-    } else {
-      g2d.draw(txShape);
+    if (txShape != null) {
+
+      if (fillPaint != null) {
+        g2d.setPaint(fillPaint);
+        g2d.fill(txShape);
+      } else if (strokePaint != null) {
+        g2d.setPaint(strokePaint);
+        g2d.draw(txShape);
+      } else {
+        g2d.draw(txShape);
+      }
+
+      g2d.setPaint(oldPaint);
     }
-
-    g2d.setPaint(oldPaint);
-
     return txShape;
   }
 
