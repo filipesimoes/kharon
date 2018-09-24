@@ -50,6 +50,8 @@ public class GraphPreviewPane extends GraphPane {
     setNodeDragMode(NodeDragMode.NONE);
     setMouseWheelZoomEnabled(false);
     setHistoryEnabled(false);
+    setEnabled(false);
+    setMouseHoverEnabled(false);
 
     initRenderers();
   }

@@ -53,6 +53,8 @@ public class GraphPane extends JComponent
 
   private Renderers renderers = new Renderers();
 
+  private boolean mouseHoverEnabled = true;
+
   private StageMode stageMode = StageMode.PAN;
   private NodeDragMode nodeDragMode = NodeDragMode.SELECTION;
   private RenderContext renderContext;
@@ -721,23 +723,25 @@ public class GraphPane extends JComponent
 
   @Override
   public void mouseMoved(MouseEvent e) {
-    boolean wasHovering = this.nodeUnderMouse != null;
-    String oldId = wasHovering ? this.nodeUnderMouse.getId() : null;
+    if (isMouseHoverEnabled()) {
+      boolean wasHovering = this.nodeUnderMouse != null;
+      String oldId = wasHovering ? this.nodeUnderMouse.getId() : null;
 
-    this.nodeUnderMouse = getNodeUnderMouse(e);
+      this.nodeUnderMouse = getNodeUnderMouse(e);
 
-    boolean isHovering = this.nodeUnderMouse != null;
-    String id = isHovering ? this.nodeUnderMouse.getId() : null;
+      boolean isHovering = this.nodeUnderMouse != null;
+      String id = isHovering ? this.nodeUnderMouse.getId() : null;
 
-    if (wasHovering && !isHovering) {
-      notifyNodeOut(e);
-    } else if (!wasHovering && isHovering) {
-      notifyNodeHover(getHoveredNode(), e);
-    } else if (wasHovering && isHovering && !id.equals(oldId)) {
-      notifyNodeOut(e);
-      notifyNodeHover(getHoveredNode(), e);
+      if (wasHovering && !isHovering) {
+        notifyNodeOut(e);
+      } else if (!wasHovering && isHovering) {
+        notifyNodeHover(getHoveredNode(), e);
+      } else if (wasHovering && isHovering && !id.equals(oldId)) {
+        notifyNodeOut(e);
+        notifyNodeHover(getHoveredNode(), e);
+      }
+      repaint();
     }
-    repaint();
   }
 
   public boolean isShowBoundingBoxes() {
@@ -977,6 +981,14 @@ public class GraphPane extends JComponent
   public void reset() {
     toOrigin();
     setZoom(1d);
+  }
+
+  public boolean isMouseHoverEnabled() {
+    return mouseHoverEnabled;
+  }
+
+  public void setMouseHoverEnabled(boolean mouseHoverEnabled) {
+    this.mouseHoverEnabled = mouseHoverEnabled;
   }
 
 }

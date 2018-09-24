@@ -94,4 +94,12 @@ public class GraphWithPreviewPane extends JLayeredPane implements ComponentListe
     this.previewSizeWeight = previewSizeWeigth;
   }
 
+  public double getPreviewSizeWeight() {
+    return previewSizeWeight;
+  }
+
+  public void setPreviewSizeWeight(double previewSizeWeight) {
+    this.previewSizeWeight = previewSizeWeight;
+  }
+
 }
