@@ -897,7 +897,6 @@ public class GraphPane extends JComponent
   @Override
   public void componentResized(ComponentEvent e) {
     resetBuffer();
-    repaint();
   }
 
   @Override
@@ -1037,8 +1036,8 @@ public class GraphPane extends JComponent
 
     double zoom = Math.min(zoomFactorWidth, zoomFactorHeight);
 
-    zoom = Math.min(zoom, MAX_ZOOM);
-    zoom = Math.max(zoom, MIN_ZOOM);
+    zoom = Math.min(zoom, maxZoom);
+    zoom = Math.max(zoom, minZoom);
 
     setGraphZoom(zoom);
 
