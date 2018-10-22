@@ -30,6 +30,12 @@ public class Node implements Cloneable {
     this.id = id;
   }
 
+  public Node(String id, int x, int y) {
+    this.id = id;
+    this.x = x;
+    this.y = y;
+  }
+
   public String getId() {
     return this.id;
   }
@@ -118,6 +124,38 @@ public class Node implements Cloneable {
     this.degree.decrementAndGet();
   }
 
+  public boolean isHigherThan(Node o) {
+    return y < o.y;
+  }
+
+  public boolean isLeftOf(Node o) {
+    return x < o.x;
+  }
+
+  public static Node getHigher(Node... nodes) {
+    Node higher = null;
+
+    for (Node node : nodes) {
+      if (higher == null || node.isHigherThan(higher)) {
+        higher = node;
+      }
+    }
+
+    return higher;
+  }
+
+  public static Node getLeftmost(Node... nodes) {
+    Node leftmost = null;
+
+    for (Node node : nodes) {
+      if (leftmost == null || node.isLeftOf(leftmost)) {
+        leftmost = node;
+      }
+    }
+
+    return leftmost;
+  }
+
   @Override
   public int hashCode() {
     final int prime = 31;
@@ -164,6 +202,12 @@ public class Node implements Cloneable {
     clone.degree = new AtomicInteger(degree.get());
 
     return clone;
+  }
+
+  public double distance(Node neighbour) {
+    double px = neighbour.getX() - this.getX();
+    double py = neighbour.getY() - this.getY();
+    return Math.sqrt(px * px + py * py);
   }
 
 }

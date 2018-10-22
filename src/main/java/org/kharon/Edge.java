@@ -7,6 +7,8 @@ public class Edge implements Cloneable {
   private String id;
   private String source;
   private String target;
+  
+  private String label;
 
   private String type = "default";
   private Color color;
@@ -50,6 +52,14 @@ public class Edge implements Cloneable {
 
   public void setColor(Color color) {
     this.color = color;
+  }
+
+  public String getLabel() {
+    return label;
+  }
+
+  public void setLabel(String label) {
+    this.label = label;
   }
 
   @Override

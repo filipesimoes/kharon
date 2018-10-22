@@ -43,37 +43,75 @@ public class Sample {
   public static void show() throws URISyntaxException {
 
     Graph graph = new Graph();
+    Node node0 = new Node("0");
+    node0.setLabel("Node 0");
+    node0.setX(50 + (int) (Math.random() * 300));
+    node0.setY(50 + (int) (Math.random() * 300));
+    node0.setType("bug");
+    node0.setSize(30);
+    graph.addNode(node0);
 
-    int totalNodes = 40;
-    Node[] nodes = new Node[totalNodes + 1];
+    Node node1 = new Node("1");
+    node1.setLabel("Node 1");
+    node1.setX(50 + (int) (Math.random() * 300));
+    node1.setY(50 + (int) (Math.random() * 300));
+    node1.setType("bug");
+    node1.setSize(30);
+    graph.addNode(node1);
 
-    for (int i = 0; i < totalNodes; i++) {
-      Node node = new Node("" + i);
-      node.setLabel("Node " + i);
-      node.setX(50 + (int) (Math.random() * 2000));
-      node.setY(50 + (int) (Math.random() * 1000));
-      node.setType("bug");
-      node.setSize(30);
-      graph.addNode(node);
-      nodes[i] = node;
-    }
+//    Node node2 = new Node("2");
+//    node2.setLabel("Node 2");
+//    node2.setX(50 + (int) (Math.random() * 300));
+//    node2.setY(50 + (int) (Math.random() * 300));
+//    node2.setType("bug");
+//    node2.setSize(30);
+//    graph.addNode(node2);
 
-    Node node = new Node("special");
-    node.setLabel("Very long and special label for this node");
-    node.setX(50 + (int) (Math.random() * 1000));
-    node.setY(50 + (int) (Math.random() * 600));
-    node.setType("bug");
-    node.setSize(30);
-    graph.addNode(node);
-    nodes[totalNodes] = node;
+    Edge edge0 = new Edge("0", node0, node1);
+    edge0.setLabel("Label 0 -> 1");
+    graph.addEdge(edge0);
 
-    for (int i = 0; i < nodes.length; i++) {
-      for (int j = 0; j < 2; j++) {
-        Node target = nodes[(int) ((nodes.length - 1) * Math.random())];
-        Edge edge = new Edge("" + i + "_" + j, nodes[i], target);
-        graph.addEdge(edge);
-      }
-    }
+//    Edge edge1 = new Edge("1", node1, node2);
+//    edge1.setLabel("Label 1 > 2");
+//    graph.addEdge(edge1);
+//
+//    Edge edge2 = new Edge("2", node2, node0);
+//    edge2.setLabel("Label 2>0");
+//    graph.addEdge(edge2);
+
+    // int totalNodes = 2;
+    // Node[] nodes = new Node[totalNodes + 1];
+    //
+    // for (int i = 0; i < totalNodes; i++) {
+    // Node node = new Node("" + i);
+    // node.setLabel("Node " + i);
+    // node.setX(50 + (int) (Math.random() * 2000));
+    // node.setY(50 + (int) (Math.random() * 1000));
+    // node.setType("bug");
+    // node.setSize(30);
+    // graph.addNode(node);
+    // nodes[i] = node;
+    // }
+    //
+    // Node node = new Node("special");
+    // node.setLabel("Very long and special label for this node");
+    // node.setX(50 + (int) (Math.random() * 1000));
+    // node.setY(50 + (int) (Math.random() * 600));
+    // node.setType("bug");
+    // node.setSize(30);
+    // graph.addNode(node);
+    // nodes[totalNodes] = node;
+    //
+    // for (int i = 0; i < nodes.length; i++) {
+    // for (int j = 0; j < 2; j++) {
+    // Node target = nodes[(int) ((nodes.length - 1) * Math.random())];
+    // Node source = nodes[i];
+    // String id = "" + i + "_" + j;
+    // Edge edge = new Edge(id, source, target);
+    // edge.setLabel(source.getLabel() + " -> " + target.getLabel());
+    // graph.addEdge(edge);
+    // }
+    // }
 
     JFrame frame = new JFrame("Kharon, ferryman of Hades.");
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -143,9 +181,9 @@ public class Sample {
 
       @Override
       public void nodeDragged(Collection<Node> nodes, MouseEvent e) {
-        for (Node node : nodes) {
-          System.out.println("Node " + node.getId() + " dragged.");
-        }
+//        for (Node node : nodes) {
+//          System.out.println("Node " + node.getId() + " dragged.");
+//        }
       }
 
       @Override

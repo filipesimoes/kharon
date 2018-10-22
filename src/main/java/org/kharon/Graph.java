@@ -321,4 +321,20 @@ public class Graph implements Cloneable {
     return clone;
   }
 
+  public Set<Node> getNeighbours(Node node) {
+
+    Set<Node> neighbours = new HashSet<>();
+
+    NodeHolder nodeHolder = this.nodeIndex.get(node.getId());
+    Set<Edge> edges = nodeHolder.getEdges();
+    for (Edge edge : edges) {
+      String source = edge.getSource();
+      String target = edge.getTarget();
+
+      neighbours.add(this.nodeIndex.get(source).node);
+      neighbours.add(this.nodeIndex.get(target).node);
+    }
+    return neighbours;
+  }
+
 }

@@ -69,7 +69,7 @@ public class GraphPreviewPane extends GraphPane {
     renderers.registerNodeRenderer(Renderers.DEFAULT, new CircleNodeRenderer());
 
     renderers.clearEdgeRenderers();
-    renderers.registerEdgeRenderer(Renderers.DEFAULT, new DefaultEdgeRenderer());
+    renderers.registerEdgeRenderer(Renderers.DEFAULT, new DefaultEdgeRenderer(false));
 
     renderers.clearLabelRenderers();
     renderers.registerLabelRenderer(Renderers.DEFAULT, new VoidLabelRenderer());
@@ -118,11 +118,13 @@ public class GraphPreviewPane extends GraphPane {
     @Override
     public void componentShown(ComponentEvent e) {
       setViewingWindow();
+      GraphPreviewPane.this.repaint();
     }
 
     @Override
     public void componentResized(ComponentEvent e) {
       setViewingWindow();
+      GraphPreviewPane.this.repaint();
     }
 
   }
@@ -132,11 +134,13 @@ public class GraphPreviewPane extends GraphPane {
     @Override
     public void elementsAdded(GraphEvent e) {
       setViewingWindow();
+      GraphPreviewPane.this.repaint();
     }
 
     @Override
     public void elementsRemoved(GraphEvent e) {
       setViewingWindow();
+      GraphPreviewPane.this.repaint();
     }
 
   }
@@ -146,6 +150,7 @@ public class GraphPreviewPane extends GraphPane {
     @Override
     public void nodeDragStopped(Collection<Node> nodes, MouseEvent e) {
       setViewingWindow();
+      GraphPreviewPane.this.repaint();
     }
 
   }
@@ -155,11 +160,13 @@ public class GraphPreviewPane extends GraphPane {
     @Override
     public void stageMoved(double x, double y) {
       setViewingWindow();
+      GraphPreviewPane.this.repaint();
     }
 
     @Override
     public void stageZoomChanged(double zoom) {
       setViewingWindow();
+      GraphPreviewPane.this.repaint();
     }
 
   }
