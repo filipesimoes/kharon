@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
@@ -102,6 +103,23 @@ public class DefaultEdgeRenderer implements EdgeRenderer {
 
       shape.append(labelShape, false);
     }
+
+    int x1Arrow = (int) (x2 - Math.cos(slope) * target.getSize());
+    int y1Arrow = (int) (y2 + Math.sin(slope) * target.getSize());
+
+    int x2Arrow = (int) (x1Arrow + Math.cos(slope + 3 * Math.PI / 4) * 10);
+    int y2Arrow = (int) (y1Arrow - Math.sin(slope + 3 * Math.PI / 4) * 10);
+
+    int x3Arrow = (int) (x1Arrow + Math.cos(slope - 3 * Math.PI / 4) * 10);
+    int y3Arrow = (int) (y1Arrow - Math.sin(slope - 3 * Math.PI / 4) * 10);
+
+    GeneralPath arrow = new GeneralPath();
+    arrow.moveTo(x1Arrow, y1Arrow);
+    arrow.lineTo(x2Arrow, y2Arrow);
+    arrow.lineTo(x3Arrow, y3Arrow);
+    arrow.closePath();
+    
+    shape.append(arrow, false);
 
     GraphShape graphShape = new GraphShape(shape);
 

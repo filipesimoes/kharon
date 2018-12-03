@@ -1,6 +1,7 @@
 package org.kharon;
 
 import java.awt.Color;
+import java.awt.Rectangle;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Node implements Cloneable {
@@ -19,7 +20,8 @@ public class Node implements Cloneable {
   private Color color;
   private Color labelColor;
 
-  private AtomicInteger degree = new AtomicInteger(0);
+  private AtomicInteger incomingDegree = new AtomicInteger(0);
+  private AtomicInteger outcomingDegree = new AtomicInteger(0);
 
   private Node() {
     super();
@@ -113,15 +115,31 @@ public class Node implements Cloneable {
   }
 
   public int getDegree() {
-    return degree.get();
+    return incomingDegree.get() + outcomingDegree.get();
   }
 
-  void increaseDegree() {
-    this.degree.incrementAndGet();
+  public int getIncomingDegree() {
+    return incomingDegree.get();
   }
 
-  void decreaseDegree() {
-    this.degree.decrementAndGet();
+  void increaseIncomingDegree() {
+    this.incomingDegree.incrementAndGet();
+  }
+
+  void decreaseIncomingDegree() {
+    this.incomingDegree.decrementAndGet();
+  }
+
+  public int getOutcomingDegree() {
+    return outcomingDegree.get();
+  }
+
+  void increaseOutcomingDegree() {
+    this.outcomingDegree.incrementAndGet();
+  }
+
+  void decreaseOutcomingDegree() {
+    this.outcomingDegree.decrementAndGet();
   }
 
   public boolean isHigherThan(Node o) {
@@ -199,7 +217,7 @@ public class Node implements Cloneable {
     clone.color = color;
     clone.labelColor = labelColor;
 
-    clone.degree = new AtomicInteger(degree.get());
+    clone.incomingDegree = new AtomicInteger(incomingDegree.get());
 
     return clone;
   }
@@ -208,6 +226,15 @@ public class Node implements Cloneable {
     double px = neighbour.getX() - this.getX();
     double py = neighbour.getY() - this.getY();
     return Math.sqrt(px * px + py * py);
+  }
+
+  @Override
+  public String toString() {
+    return "Node [id=" + id + "]";
+  }
+
+  public Rectangle getBoundingBox() {
+    return new Rectangle(x, y, size, size);
   }
 
 }

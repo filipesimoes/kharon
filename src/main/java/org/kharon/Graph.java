@@ -1,11 +1,13 @@
 package org.kharon;
 
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +30,14 @@ public class Graph implements Cloneable {
 
   public void setType(String type) {
     this.type = type;
+  }
+
+  public int getSize() {
+    return nodeIndex.size();
+  }
+
+  public boolean isEmpty() {
+    return nodeIndex.isEmpty();
   }
 
   public Set<Node> getNodes() {
@@ -96,6 +106,14 @@ public class Graph implements Cloneable {
     notifyElementsRemoved(eventOriginator, removedNodes, removedEdges);
   }
 
+  public Set<Edge> getEdges(Node node) {
+    return getEdges(Arrays.asList(node));
+  }
+
+  public Set<Edge> getIncomingEdges(Node node) {
+    return getIncomingEdges(Arrays.asList(node));
+  }
+
   private Set<Edge> getEdges(Collection<Node> nodes) {
     Set<Edge> edges = new HashSet<>();
     for (Node node : nodes) {
@@ -103,6 +121,18 @@ public class Graph implements Cloneable {
       if (this.nodeIndex.containsKey(id)) {
         NodeHolder nodeHolder = getNodeHolder(id);
         edges.addAll(nodeHolder.getEdges());
+      }
+    }
+    return edges;
+  }
+
+  private Set<Edge> getIncomingEdges(Collection<Node> nodes) {
+    Set<Edge> edges = new HashSet<>();
+    for (Node node : nodes) {
+      String id = node.getId();
+      if (this.nodeIndex.containsKey(id)) {
+        NodeHolder nodeHolder = getNodeHolder(id);
+        edges.addAll(nodeHolder.getIncomingEdges());
       }
     }
     return edges;
@@ -140,11 +170,11 @@ public class Graph implements Cloneable {
       String source = edge.getSource();
       NodeHolder sourceHolder = getNodeHolder(source);
       sourceHolder.addEdge(edge);
-      sourceHolder.getNode().increaseDegree();
+      sourceHolder.getNode().increaseOutcomingDegree();
 
       String target = edge.getTarget();
       NodeHolder targetHolder = getNodeHolder(target);
-      targetHolder.getNode().increaseDegree();
+      targetHolder.getNode().increaseIncomingDegree();
       targetHolder.addEdge(edge);
     }
   }
@@ -170,12 +200,12 @@ public class Graph implements Cloneable {
         String source = edge.getSource();
         NodeHolder sourceHolder = getNodeHolder(source);
         sourceHolder.removeEdge(edge);
-        sourceHolder.getNode().decreaseDegree();
+        sourceHolder.getNode().decreaseOutcomingDegree();
 
         String target = edge.getTarget();
         NodeHolder targetHolder = getNodeHolder(target);
         targetHolder.removeEdge(edge);
-        targetHolder.getNode().decreaseDegree();
+        targetHolder.getNode().decreaseIncomingDegree();
 
         removedEdges.add(removed);
       }
@@ -225,7 +255,7 @@ public class Graph implements Cloneable {
     return nodeIndex.get(id);
   }
 
-  public Set<String> getIds() {
+  public Set<String> getNodeIds() {
     return this.nodeIndex.keySet();
   }
 
@@ -291,6 +321,16 @@ public class Graph implements Cloneable {
       return edges;
     }
 
+    public Set<Edge> getIncomingEdges() {
+      Set<Edge> edges = new HashSet<>(incoming.values());
+      return edges;
+    }
+
+    public Set<Edge> getOutcomingEdges() {
+      Set<Edge> edges = new HashSet<>(outcoming.values());
+      return edges;
+    }
+
     public Node getNode() {
       return node;
     }
@@ -322,11 +362,20 @@ public class Graph implements Cloneable {
   }
 
   public Set<Node> getNeighbours(Node node) {
-
-    Set<Node> neighbours = new HashSet<>();
-
     NodeHolder nodeHolder = this.nodeIndex.get(node.getId());
     Set<Edge> edges = nodeHolder.getEdges();
+    return getNeighbours(node, edges);
+  }
+
+  public Set<Node> getOutcomingNeighbours(Node node) {
+    NodeHolder nodeHolder = this.nodeIndex.get(node.getId());
+    Set<Edge> edges = nodeHolder.getOutcomingEdges();
+    return getNeighbours(node, edges);
+  }
+
+  private Set<Node> getNeighbours(Node node, Set<Edge> edges) {
+
+    Set<Node> neighbours = new HashSet<>();
     for (Edge edge : edges) {
       String source = edge.getSource();
       String target = edge.getTarget();
@@ -334,7 +383,25 @@ public class Graph implements Cloneable {
       neighbours.add(this.nodeIndex.get(source).node);
       neighbours.add(this.nodeIndex.get(target).node);
     }
+    neighbours.remove(node);
     return neighbours;
+  }
+
+  public Rectangle getBoundingBox() {
+    Collection<NodeHolder> holders = nodeIndex.values();
+    if (!holders.isEmpty()) {
+      Iterator<NodeHolder> iterator = holders.iterator();
+
+      Node first = iterator.next().node;
+      Rectangle box = first.getBoundingBox();
+
+      while (iterator.hasNext()) {
+        box.add(iterator.next().node.getBoundingBox());
+      }
+      return box;
+    } else {
+      return null;
+    }
   }
 
 }

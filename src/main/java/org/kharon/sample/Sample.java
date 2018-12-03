@@ -32,6 +32,8 @@ import org.kharon.Node;
 import org.kharon.NodeListener;
 import org.kharon.StageListener;
 import org.kharon.StageMode;
+import org.kharon.layout.HierarquicalLayout;
+import org.kharon.layout.Layout;
 import org.kharon.renderers.Renderers;
 
 public class Sample {
@@ -59,27 +61,47 @@ public class Sample {
     node1.setSize(30);
     graph.addNode(node1);
 
-//    Node node2 = new Node("2");
-//    node2.setLabel("Node 2");
-//    node2.setX(50 + (int) (Math.random() * 300));
-//    node2.setY(50 + (int) (Math.random() * 300));
-//    node2.setType("bug");
-//    node2.setSize(30);
-//    graph.addNode(node2);
+    Node node2 = new Node("2");
+    node2.setLabel("Node 2");
+    node2.setX(50 + (int) (Math.random() * 300));
+    node2.setY(50 + (int) (Math.random() * 300));
+    node2.setType("bug");
+    node2.setSize(30);
+    graph.addNode(node2);
+
+    Node node3 = new Node("3");
+    node3.setLabel("Node 3");
+    node3.setX(50 + (int) (Math.random() * 300));
+    node3.setY(50 + (int) (Math.random() * 300));
+    node3.setType("bug");
+    node3.setSize(30);
+    graph.addNode(node3);
+
+    Node node4 = new Node("4");
+    node4.setLabel("Node 4");
+    node4.setX(50 + (int) (Math.random() * 300));
+    node4.setY(50 + (int) (Math.random() * 300));
+    node4.setType("bug");
+    node4.setSize(50);
+    graph.addNode(node4);
 
     Edge edge0 = new Edge("0", node0, node1);
-    edge0.setLabel("Label 0 -> 1");
+    edge0.setLabel("Label 0 > 1");
     graph.addEdge(edge0);
 
-//    Edge edge1 = new Edge("1", node1, node2);
-//    edge1.setLabel("Label 1 > 2");
-//    graph.addEdge(edge1);
-//
-//    Edge edge2 = new Edge("2", node2, node0);
-//    edge2.setLabel("Label 2>0");
-//    graph.addEdge(edge2);
+    Edge edge1 = new Edge("1", node0, node2);
+    edge1.setLabel("Label 0 > 2");
+    graph.addEdge(edge1);
 
-    // int totalNodes = 2;
+    Edge edge2 = new Edge("2", node3, node2);
+    edge2.setLabel("Label 3 > 2");
+    graph.addEdge(edge2);
+
+    Edge edge3 = new Edge("3", node2, node4);
+    edge3.setLabel("Label 2 > 4");
+    graph.addEdge(edge3);
+
+    // int totalNodes = 20;
     // Node[] nodes = new Node[totalNodes + 1];
     //
     // for (int i = 0; i < totalNodes; i++) {
@@ -112,6 +134,9 @@ public class Sample {
     // graph.addEdge(edge);
     // }
     // }
+
+    Layout layout = new HierarquicalLayout();
+    layout.performLayout(graph);
 
     JFrame frame = new JFrame("Kharon, ferryman of Hades.");
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -181,9 +206,9 @@ public class Sample {
 
       @Override
       public void nodeDragged(Collection<Node> nodes, MouseEvent e) {
-//        for (Node node : nodes) {
-//          System.out.println("Node " + node.getId() + " dragged.");
-//        }
+        // for (Node node : nodes) {
+        // System.out.println("Node " + node.getId() + " dragged.");
+        // }
       }
 
       @Override

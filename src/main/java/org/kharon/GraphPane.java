@@ -36,6 +36,7 @@ import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
 import org.kharon.history.GraphHistory;
+import org.kharon.layout.Layout;
 import org.kharon.renderers.EdgeRenderer;
 import org.kharon.renderers.GraphRenderer;
 import org.kharon.renderers.LabelRenderer;
@@ -113,7 +114,7 @@ public class GraphPane extends JComponent
 
     this.graph.addListener(this);
 
-    this.idleNodes.addAll(this.graph.getIds());
+    this.idleNodes.addAll(this.graph.getNodeIds());
   }
 
   @Override
@@ -838,7 +839,7 @@ public class GraphPane extends JComponent
   }
 
   public void selectAll() {
-    this.selectedNodes.addAll(this.graph.getIds());
+    this.selectedNodes.addAll(this.graph.getNodeIds());
     repaint();
   }
 
@@ -995,6 +996,11 @@ public class GraphPane extends JComponent
 
   public void setMouseHoverEnabled(boolean mouseHoverEnabled) {
     this.mouseHoverEnabled = mouseHoverEnabled;
+  }
+
+  public void applyLayout(Layout layout) {
+    layout.performLayout(graph);
+    resetBuffer();
   }
 
   public void fitToScreen() {

@@ -7,7 +7,7 @@ public class Edge implements Cloneable {
   private String id;
   private String source;
   private String target;
-  
+
   private String label;
 
   private String type = "default";
@@ -99,6 +99,11 @@ public class Edge implements Cloneable {
     clone.color = color;
 
     return clone;
+  }
+
+  @Override
+  public String toString() {
+    return "Edge [id=" + id + ", source=" + source + ", target=" + target + "]";
   }
 
 }
