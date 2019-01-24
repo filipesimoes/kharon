@@ -94,6 +94,17 @@ public class Node implements Cloneable {
     return label;
   }
 
+  public String getShortenedLabel(int maxLength) {
+    String shortened = label;
+
+    if (shortened != null && shortened.length() + 3 > maxLength) {
+      shortened = shortened.substring(0, (maxLength / 2) - 3) + "..."
+          + shortened.substring(shortened.length() - (maxLength / 2));
+    }
+
+    return shortened;
+  }
+
   public void setLabel(String label) {
     this.label = label;
   }

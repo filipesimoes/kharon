@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.kharon.layout.Layout;
+
 public class Graph implements Cloneable {
 
   private String type = "default";
@@ -23,6 +25,8 @@ public class Graph implements Cloneable {
   private Map<String, Edge> edgeIndex = new HashMap<>();
 
   private List<GraphListener> listeners = new ArrayList<>();
+
+  private GroupPositioner groupPositioner = new RandomGroupPositioner();
 
   public String getType() {
     return type;
@@ -59,6 +63,10 @@ public class Graph implements Cloneable {
 
   public boolean containsNode(String id) {
     return this.nodeIndex.containsKey(id);
+  }
+
+  public void applyLayout(Layout layout) {
+    layout.performLayout(this);
   }
 
   public Collection<Edge> getEdges() {
@@ -402,6 +410,24 @@ public class Graph implements Cloneable {
     } else {
       return null;
     }
+  }
+
+  public void ungroup(NodeGroup group) {
+    removeNode(group);
+
+    for (Node node : group.getNodes()) {
+      groupPositioner.place(group, node);
+    }
+
+    addNodes(group.getNodes());
+
+    Set<Node> neighbours = getNeighbours(group);
+    for (Node neighbour : neighbours) {
+      if (neighbour instanceof NodeGroup) {
+
+      }
+    }
+//    addEdges(group.getEdges());
   }
 
 }

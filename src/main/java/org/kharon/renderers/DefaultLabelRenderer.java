@@ -29,9 +29,7 @@ public class DefaultLabelRenderer implements LabelRenderer {
     String label = node.getLabel();
 
     if (label != null) {
-      if (label.length() + 3 > maxLength) {
-        label = label.substring(0, (maxLength / 2) - 3) + "..." + label.substring(label.length() - (maxLength / 2));
-      }
+      label = node.getShortenedLabel(maxLength);
       Font font = g.getFont();
       FontMetrics fontMetrics = g.getFontMetrics(font);
 

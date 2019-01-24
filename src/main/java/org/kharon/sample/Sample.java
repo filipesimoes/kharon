@@ -135,8 +135,6 @@ public class Sample {
     // }
     // }
 
-    Layout layout = new HierarquicalLayout();
-    layout.performLayout(graph);
 
     JFrame frame = new JFrame("Kharon, ferryman of Hades.");
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -152,7 +150,7 @@ public class Sample {
     final GraphPane graphPane = graphWithPreviewPane.getGraphPane();
     graphPane.setBackground(Color.WHITE);
     graphPane.setHistoryEnabled(true);
-
+    
     Renderers renderers = graphPane.getRenderers();
 
     renderers.registerNodeRenderer("bug", new BugNodeRenderer());

@@ -37,6 +37,12 @@ public class GraphHistory {
     this.position = 0;
   }
 
+  public void add(List<GraphAction> newActions) {
+    for (GraphAction action : newActions) {
+      add(action);
+    }
+  }
+
   public void add(GraphAction action) {
     if (position < actions.size() - 1) {
       for (int index = this.actions.size() - 1; index > position; index--) {

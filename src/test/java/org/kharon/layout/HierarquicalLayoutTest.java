@@ -89,7 +89,7 @@ public class HierarquicalLayoutTest {
 
     Level level = new Level(Arrays.asList(node0, node1));
 
-    Dimension dim = level.getDimension(HierarquicalLayout.V_GAP);
+    Dimension dim = level.getDimension(HierarquicalLayout.DEFAULT_V_GAP, null);
 
     assertEquals(160, dim.width);
     assertEquals(40, dim.height);
@@ -111,7 +111,7 @@ public class HierarquicalLayoutTest {
 
     Level level1 = new Level(Arrays.asList(node2, node3));
 
-    Dimension dim = layout.getTotalDimension(Arrays.asList(level0, level1));
+    Dimension dim = layout.getTotalDimension(Arrays.asList(level0, level1), null);
 
     assertEquals(160, dim.width);
     assertEquals(250, dim.height);

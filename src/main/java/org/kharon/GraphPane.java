@@ -2,6 +2,8 @@ package org.kharon;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -35,8 +37,9 @@ import java.util.Set;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
+import org.kharon.history.GraphAction;
 import org.kharon.history.GraphHistory;
-import org.kharon.layout.Layout;
+import org.kharon.layout.HistoryEnabledLayout;
 import org.kharon.renderers.EdgeRenderer;
 import org.kharon.renderers.GraphRenderer;
 import org.kharon.renderers.LabelRenderer;
@@ -998,8 +1001,19 @@ public class GraphPane extends JComponent
     this.mouseHoverEnabled = mouseHoverEnabled;
   }
 
-  public void applyLayout(Layout layout) {
-    layout.performLayout(graph);
+  public void applyLayout(HistoryEnabledLayout layout) {
+    Graphics2D graphics = (Graphics2D) getGraphics();
+
+    AffineTransform oldTransform = graphics.getTransform();
+    try {
+      graphics.setTransform(new AffineTransform());
+      Font font = graphics.getFont();
+      FontMetrics fontMetrics = graphics.getFontMetrics(font);
+      List<GraphAction> actions = layout.performLayout(this, fontMetrics);
+      this.history.add(actions);
+    } finally {
+      graphics.setTransform(oldTransform);
+    }
     resetBuffer();
   }
 

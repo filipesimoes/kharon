@@ -1,6 +1,7 @@
 package org.kharon.layout;
 
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,22 +16,37 @@ import org.kharon.Edge;
 import org.kharon.Graph;
 import org.kharon.Node;
 
-public class HierarquicalLayout implements Layout {
+public class HierarquicalLayout extends AbstractHistoryEnabledLayout {
 
-  private static final int SUB_GRAPH_GAP = 30;
-  static final double V_GAP = 5d;
-  static final double H_GAP = 5d;
-  // private static final NodeDegreeComparator NODE_DEGREE_COMPARATOR = new
-  // NodeDegreeComparator();
+  private static final int DEFAULT_SUB_GRAPH_GAP = 30;
+  static final double DEFAULT_V_GAP = 5d;
+  static final double DEFAULT_H_GAP = 5d;
   private static final GraphSizeComparator GRAPH_SIZE_COMPARATOR = new GraphSizeComparator();
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.kharon.layout.Layout#performLayout(org.kharon.Graph)
-   */
+  private int maxLength = 30;
+
+  private double vGap = DEFAULT_V_GAP;
+  private double hGap = DEFAULT_H_GAP;
+
+  public HierarquicalLayout(int maxLabelLength, double vGap, double hGap) {
+    super();
+    this.maxLength = maxLabelLength;
+    this.vGap = vGap;
+    this.hGap = hGap;
+  }
+
+  public HierarquicalLayout() {
+    super();
+  }
+
+  public HierarquicalLayout(double vGap, double hGap) {
+    super();
+    this.vGap = vGap;
+    this.hGap = hGap;
+  }
+
   @Override
-  public void performLayout(Graph graph) {
+  protected void performLayout(Graph graph, LayoutAction action, FontMetrics fontMetrics) {
     List<Graph> subGraphs = getConnectedSubGraphs(graph);
 
     Collections.sort(subGraphs, Collections.reverseOrder(GRAPH_SIZE_COMPARATOR));
@@ -40,50 +56,59 @@ public class HierarquicalLayout implements Layout {
     int left = (int) boundingBox.getMinX();
     int middle = (int) (boundingBox.getMinY() + boundingBox.height / 2);
     for (Graph subGraph : subGraphs) {
-      boundingBox = performLayoutSubGraph(subGraph, left, middle);
-      left += boundingBox.width + SUB_GRAPH_GAP;
+      boundingBox = performLayoutSubGraph(subGraph, action, left, middle, fontMetrics);
+      left += boundingBox.width + DEFAULT_SUB_GRAPH_GAP;
     }
 
   }
 
-  private Rectangle performLayoutSubGraph(Graph subGraph, int left, int middle) {
+  private Rectangle performLayoutSubGraph(Graph subGraph, LayoutAction action, int left, int middle,
+      FontMetrics fontMetrics) {
 
     List<Node> nodes = new ArrayList<>(subGraph.getNodes());
 
     List<Node> lowestDegreeNodes = collectLowestDegreeNodes(nodes);
 
     List<Level> levels = buildLevels(lowestDegreeNodes, subGraph);
-    Dimension totalDim = getTotalDimension(levels);
+    Dimension totalDim = getTotalDimension(levels, fontMetrics);
     int top = (int) middle - (totalDim.height / 2);
     int levelTop = top;
     for (Level level : levels) {
-      Dimension dimension = level.getDimension(V_GAP);
+      Dimension dimension = level.getDimension(vGap, fontMetrics);
       int levelLeft = left + (totalDim.width / 2) - (dimension.width / 2);
       for (int index = 0; index < level.nodes.size(); index++) {
         Node node = level.nodes.get(index);
-        node.setX(levelLeft);
-        node.setY(levelTop);
-        levelLeft += node.getSize() * (1 + V_GAP);
+        action.move(node, levelLeft, levelTop);
+
+        int size = node.getSize();
+        int labelWidth = 0;
+        String label = node.getShortenedLabel(maxLength);
+        if (label != null && fontMetrics != null) {
+          labelWidth = fontMetrics.stringWidth(label);
+        }
+        size = Math.max(size, labelWidth);
+
+        levelLeft += size * (1 + vGap);
       }
 
-      levelTop += dimension.height * (1 + H_GAP);
+      levelTop += dimension.height * (1 + hGap);
     }
 
     return new Rectangle(left, top, totalDim.width, totalDim.height);
 
   }
 
-  public Dimension getTotalDimension(List<Level> levels) {
+  public Dimension getTotalDimension(List<Level> levels, FontMetrics fontMetrics) {
     int width = 0;
     int height = 0;
 
     for (int index = 0; index < levels.size(); index++) {
       Level level = levels.get(index);
-      Dimension dim = level.getDimension(V_GAP);
+      Dimension dim = level.getDimension(vGap, fontMetrics);
       width = Math.max(width, dim.width);
 
       if (index + 1 < levels.size()) {
-        height += dim.height * (1 + H_GAP);
+        height += dim.height * (1 + hGap);
       } else {
         height += dim.height;
       }
@@ -93,7 +118,7 @@ public class HierarquicalLayout implements Layout {
   }
 
   public List<Level> buildLevels(List<Node> lowestDegreeNodes, Graph graph) {
-    Level level0 = new Level(lowestDegreeNodes);
+    Level level0 = new Level(maxLength, lowestDegreeNodes);
 
     List<Level> result = new ArrayList<>();
     result.add(level0);
@@ -114,7 +139,7 @@ public class HierarquicalLayout implements Layout {
       if (height + 1 < result.size()) {
         level = result.get(height + 1);
       } else {
-        level = new Level();
+        level = new Level(maxLength);
         result.add(level);
       }
 
@@ -188,19 +213,26 @@ public class HierarquicalLayout implements Layout {
 
   static class Level {
 
+    int maxLength;
     List<Node> nodes;
     private Dimension dim;
 
-    public Level(List<Node> nodes) {
-      super();
+    public Level(int maxLength, List<Node> nodes) {
+      this.maxLength = maxLength;
       this.nodes = nodes;
     }
 
-    public Level() {
-      this(new ArrayList<>());
+    public Level(int maxLength) {
+      this.maxLength = maxLength;
+      this.nodes = new ArrayList<>();
     }
 
-    public Dimension getDimension(double gap) {
+    public Level(List<Node> nodes) {
+      this.maxLength = 30;
+      this.nodes = nodes;
+    }
+
+    public Dimension getDimension(double gap, FontMetrics fontMetrics) {
       if (dim == null) {
         int width = 0;
         int height = 0;
@@ -208,7 +240,13 @@ public class HierarquicalLayout implements Layout {
         for (int index = 0; index < nodes.size(); index++) {
           Node node = nodes.get(index);
           int size = node.getSize();
-          height = Math.max(height, size);
+          int labelWidth = 0;
+          String label = node.getShortenedLabel(maxLength);
+          if (label != null && fontMetrics != null) {
+            labelWidth = fontMetrics.stringWidth(label);
+          }
+          size = Math.max(size, labelWidth);
+          height = Math.max(height, node.getSize());
 
           if (index + 1 < nodes.size()) {
             width += size * (1 + gap);
@@ -223,15 +261,6 @@ public class HierarquicalLayout implements Layout {
     }
 
   }
-
-  // private static class NodeDegreeComparator implements Comparator<Node> {
-  //
-  // @Override
-  // public int compare(Node o1, Node o2) {
-  // return o1.getOutcomingDegree() - o2.getOutcomingDegree();
-  // }
-  //
-  // }
 
   private static class GraphSizeComparator implements Comparator<Graph> {
 

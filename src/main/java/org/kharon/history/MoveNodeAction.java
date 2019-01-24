@@ -1,5 +1,6 @@
 package org.kharon.history;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -34,6 +35,23 @@ public class MoveNodeAction implements GraphAction {
     this.oldYs = oldYs;
     this.newXs = newXs;
     this.newYs = newYs;
+  }
+  
+  public MoveNodeAction() {
+    super();
+    this.nodeIds = new ArrayList<>();
+    this.oldXs = new ArrayList<>();
+    this.oldYs = new ArrayList<>();
+    this.newXs = new ArrayList<>();
+    this.newYs = new ArrayList<>();
+  }
+
+  public void setMoved(Node node, int x, int y) {
+    this.nodeIds.add(node.getId());
+    this.oldXs.add(node.getX());
+    this.oldYs.add(node.getY());
+    this.newXs.add(x);
+    this.newYs.add(y);
   }
 
   @Override
