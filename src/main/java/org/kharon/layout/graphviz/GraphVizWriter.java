@@ -27,7 +27,7 @@ public class GraphVizWriter {
   private void writeDigraph(Graph graph) throws IOException {
     writer.write("digraph {");
     writerEdges(graph);
-    writer.write("}");
+    writer.write("}\r\n");
   }
 
   private void writerEdges(Graph graph) throws IOException {
