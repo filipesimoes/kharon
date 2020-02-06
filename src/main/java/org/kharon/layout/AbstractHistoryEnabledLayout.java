@@ -33,17 +33,17 @@ public abstract class AbstractHistoryEnabledLayout implements Layout, HistoryEna
    */
   protected abstract void performLayout(Graph graph, LayoutAction action, FontMetrics fontMetrics);
 
-  private static class SimpleLayoutAction implements LayoutAction {
+  private static class SimpleLayoutAction extends LayoutAction {
 
     @Override
-    public void move(Node node, int x, int y) {
+    public void move(Node node, int oldX, int oldY, int x, int y) {
       node.setX(x);
       node.setY(y);
     }
 
   }
 
-  private static class HistoryEnabledLayoutAction implements LayoutAction {
+  private static class HistoryEnabledLayoutAction extends LayoutAction {
 
     private MoveNodeAction action;
 
@@ -53,17 +53,21 @@ public abstract class AbstractHistoryEnabledLayout implements Layout, HistoryEna
     }
 
     @Override
-    public void move(Node node, int x, int y) {
-      action.setMoved(node, x, y);
+    public void move(Node node, int oldX, int oldY, int x, int y) {
+      action.setMoved(node, oldX, oldY, x, y);
       node.setX(x);
       node.setY(y);
     }
 
   }
 
-  public static interface LayoutAction {
+  public static abstract class LayoutAction {
 
-    void move(Node node, int x, int y);
+    void move(Node node, int x, int y) {
+      move(node, node.getX(), node.getY(), x, y);
+    }
+
+    public abstract void move(Node node, int oldX, int oldY, int x, int y);
 
   }
 

@@ -360,13 +360,21 @@ public class Graph implements Cloneable {
 
   @SuppressWarnings("unchecked")
   @Override
-  protected Object clone() throws CloneNotSupportedException {
+  public Object clone() throws CloneNotSupportedException {
     Graph clone = new Graph();
     clone.type = type;
     clone.settings = (GraphSettings) settings.clone();
     clone.edgeIndex = (Map<String, Edge>) ((HashMap<String, Edge>) edgeIndex).clone();
     clone.nodeIndex = (Map<String, NodeHolder>) ((HashMap<String, NodeHolder>) nodeIndex).clone();
     return clone;
+  }
+
+  public Graph cloneGraph() {
+    try {
+      return (Graph) clone();
+    } catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public Set<Node> getNeighbours(Node node) {

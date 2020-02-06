@@ -33,26 +33,48 @@ public class GraphVizSample {
     graph.addNode(new Node("c", (int) (Math.random() * 400), (int) (Math.random() * 500)));
     graph.addNode(new Node("d", (int) (Math.random() * 400), (int) (Math.random() * 500)));
     graph.addNode(new Node("e", (int) (Math.random() * 400), (int) (Math.random() * 500)));
-
-    graph.addEdge(new Edge("0", "a", "b"));
-    graph.addEdge(new Edge("1", "b", "c"));
-    graph.addEdge(new Edge("2", "a", "c"));
-    graph.addEdge(new Edge("3", "d", "c"));
-    graph.addEdge(new Edge("4", "e", "c"));
-    graph.addEdge(new Edge("5", "e", "a"));
-
     graph.addNode(new Node("f", (int) (Math.random() * 400), (int) (Math.random() * 500)));
     graph.addNode(new Node("g", (int) (Math.random() * 400), (int) (Math.random() * 500)));
     graph.addNode(new Node("h", (int) (Math.random() * 400), (int) (Math.random() * 500)));
     graph.addNode(new Node("i", (int) (Math.random() * 400), (int) (Math.random() * 500)));
     graph.addNode(new Node("j", (int) (Math.random() * 400), (int) (Math.random() * 500)));
+    graph.addNode(new Node("k", (int) (Math.random() * 400), (int) (Math.random() * 500)));
+    graph.addNode(new Node("l", (int) (Math.random() * 400), (int) (Math.random() * 500)));
+    graph.addNode(new Node("m", (int) (Math.random() * 400), (int) (Math.random() * 500)));
+    graph.addNode(new Node("n", (int) (Math.random() * 400), (int) (Math.random() * 500)));
+    graph.addNode(new Node("o", (int) (Math.random() * 400), (int) (Math.random() * 500)));
+    graph.addNode(new Node("p", (int) (Math.random() * 400), (int) (Math.random() * 500)));
+    graph.addNode(new Node("q", (int) (Math.random() * 400), (int) (Math.random() * 500)));
+    graph.addNode(new Node("r", (int) (Math.random() * 400), (int) (Math.random() * 500)));
+    graph.addNode(new Node("s", (int) (Math.random() * 400), (int) (Math.random() * 500)));
+    graph.addNode(new Node("t", (int) (Math.random() * 400), (int) (Math.random() * 500)));
+    graph.addNode(new Node("u", (int) (Math.random() * 400), (int) (Math.random() * 500)));
+    graph.addNode(new Node("v", (int) (Math.random() * 400), (int) (Math.random() * 500)));
 
-    graph.addEdge(new Edge("6", "f", "g"));
-    graph.addEdge(new Edge("7", "g", "h"));
-    graph.addEdge(new Edge("8", "f", "h"));
-    graph.addEdge(new Edge("9", "i", "h"));
-    graph.addEdge(new Edge("10", "j", "h"));
-    graph.addEdge(new Edge("11", "j", "f"));
+    graph.addEdge(new Edge("0", "a", "b"));
+    graph.addEdge(new Edge("1", "a", "c"));
+    graph.addEdge(new Edge("2", "a", "d"));
+
+    graph.addEdge(new Edge("3", "b", "e"));
+    graph.addEdge(new Edge("4", "b", "f"));
+    graph.addEdge(new Edge("5", "b", "g"));
+    graph.addEdge(new Edge("6", "b", "h"));
+    graph.addEdge(new Edge("7", "b", "i"));
+    graph.addEdge(new Edge("8", "b", "j"));
+
+    graph.addEdge(new Edge("9", "c", "k"));
+    graph.addEdge(new Edge("10", "c", "l"));
+    graph.addEdge(new Edge("11", "c", "m"));
+    graph.addEdge(new Edge("12", "c", "n"));
+    graph.addEdge(new Edge("13", "c", "o"));
+    graph.addEdge(new Edge("14", "c", "p"));
+
+    graph.addEdge(new Edge("15", "d", "q"));
+    graph.addEdge(new Edge("16", "d", "r"));
+    graph.addEdge(new Edge("17", "d", "s"));
+    graph.addEdge(new Edge("18", "d", "t"));
+    graph.addEdge(new Edge("19", "d", "u"));
+    graph.addEdge(new Edge("20", "d", "v"));
 
     final GraphPane graphPane = new GraphPane(graph);
     graphPane.setBackground(Color.WHITE);
