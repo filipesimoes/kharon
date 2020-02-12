@@ -66,6 +66,7 @@ public class GraphPane extends JComponent
 
   private List<NodeListener> nodeListeners = new ArrayList<>();
   private List<StageListener> stageListeners = new ArrayList<>();
+  private List<EdgeListener> edgeListeners = new ArrayList<>();
 
   private boolean historyEnabled = false;
   private GraphHistory history;
@@ -79,6 +80,7 @@ public class GraphPane extends JComponent
 
   private boolean isDragging = false;
   private Node nodeUnderMouse = null;
+  private Edge edgeUnderMouse = null;
 
   protected AffineTransform transform = new AffineTransform();
   protected AffineTransform inverseTransform = new AffineTransform();
@@ -90,6 +92,7 @@ public class GraphPane extends JComponent
   private int nodeDragOffsetY;
 
   private Set<String> selectedNodes = new HashSet<>();
+  private Set<String> selectedEdges = new HashSet<>();
   private Map<String, NodeBoundingBox> boxesIndex = new HashMap<>();
 
   private Set<String> idleNodes = new HashSet<>();
@@ -183,6 +186,8 @@ public class GraphPane extends JComponent
     }
 
     g2d.drawImage(idleBuffer, originX, originY, null);
+    
+    paintSelectedEdges(liveGraphics, graphTransformation, clipBounds, graph.getEdges());
 
     Node hoveredNode = getHoveredNode();
     if (hoveredNode != null && !isPrinting) {
@@ -280,6 +285,24 @@ public class GraphPane extends JComponent
       }
     }
   }
+  
+  private void paintSelectedEdges(Graphics2D g2d, AffineTransform tx, Rectangle2D clipBounds, Collection<Edge> edges) {
+      for (Edge edge : edges) {
+        if(selectedEdges.contains(edge.getId())) {
+            edge.setColor(Color.RED);
+        }else if(edge.equals(this.edgeUnderMouse)){
+            edge.setColor(Color.BLACK);
+        }else {
+            continue;
+        }
+        EdgeRenderer renderer = renderers.getEdgeRenderer(edge.getType());
+        GraphShape graphShape = renderer.render(g2d, edge, renderContext);
+        if (graphShape != null && graphShape.getShape().intersects(clipBounds)) {
+          graphShape.draw(g2d, tx);
+        }
+        edge.setColor(null);
+      }
+    }
 
   public BufferedImage toImage() {
     BufferedImage image = new BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TYPE_INT_ARGB);
@@ -299,6 +322,14 @@ public class GraphPane extends JComponent
     this.nodeListeners.remove(nodeListener);
   }
 
+  public void addEdgeListener(EdgeListener listener) {
+    this.edgeListeners.add(listener);
+  }
+
+  public void removeEdgeListener(EdgeListener listener) {
+    this.edgeListeners.remove(listener);
+  }
+
   public void addStageListener(StageListener stageListener) {
     this.stageListeners.add(stageListener);
   }
@@ -313,7 +344,11 @@ public class GraphPane extends JComponent
       if (this.nodeUnderMouse != null) {
         notifyNodeClicked(this.nodeUnderMouse, e);
       } else {
-        notifyStageClicked(e);
+        if(this.edgeUnderMouse != null) {
+          notifyEdgeClicked(edgeUnderMouse, e);
+        }else {
+          notifyStageClicked(e);    
+        }
       }
     }
   }
@@ -352,6 +387,24 @@ public class GraphPane extends JComponent
     for (NodeListener listener : this.nodeListeners) {
       listener.nodeClicked(node, e);
     }
+  }
+  
+  private void notifyEdgeClicked(Edge edge, MouseEvent e) {
+    for (EdgeListener listener : this.edgeListeners) {
+      listener.edgeClicked(edge, e);
+    }
+  }
+  
+  private void notifyEdgeHover(Edge edge, MouseEvent e) {
+      for (EdgeListener listener : this.edgeListeners) {
+        listener.edgeHovered(edge, e);
+      }
+  }
+  
+  private void notifyEdgeOut(Edge edge, MouseEvent e) {
+      for (EdgeListener listener : this.edgeListeners) {
+        listener.edgeOut(edge, e);
+      }
   }
 
   private void notifyNodePressed(Node node, MouseEvent e) {
@@ -406,6 +459,43 @@ public class GraphPane extends JComponent
       }
     }
     return null;
+  }
+  
+  private Edge getEdgeUnderMouse(MouseEvent evt) {
+      Point2D evtPoint = invert(evt.getPoint());
+      Set<Edge> edges = graph.getNodesEdges(this.idleNodes);
+      
+      for (Edge edge : edges) {
+        if (isNearEdge(edge, evtPoint))
+          return edge;
+      }
+      return null;
+  }
+  
+  private boolean isNearEdge(Edge edge, Point2D p) {
+      Node n1 = renderContext.getGraph().getNode(edge.getSource());
+      Node n2 = renderContext.getGraph().getNode(edge.getTarget());
+      double x1 = n1.getX() + n1.getSize() / 2, x2 = n2.getX() + n2.getSize() / 2;
+      double y1 = n1.getY() + n1.getSize() / 2, y2 = n2.getY() + n2.getSize() / 2;
+      
+      double d = 5;
+      
+      if(x1 < x2 && (p.getX() < x1 - d || p.getX() > x2 + d))
+          return false;
+      if(x1 > x2 && (p.getX() > x1 + d || p.getX() < x2 - d))
+          return false;
+      if(y1 < y2 && (p.getY() < y1 - d || p.getY() > y2 + d))
+          return false;
+      if(y1 > y2 && (p.getY() > y1 + d || p.getY() < y2 - d))
+          return false;
+      
+      double num = Math.abs((y2 - y1) * p.getX() - (x2 - x1) * p.getY() + x2 * y1 - y2 * x1);
+      double div = Math.sqrt(Math.pow((y2 - y1), 2) + Math.pow(x2 - x1, 2));
+      double dist = num / div;
+      if(dist < d)
+          return true;
+      else
+          return false;
   }
 
   private void applyCurrentSelection(MouseEvent e) {
@@ -743,6 +833,9 @@ public class GraphPane extends JComponent
       boolean isHovering = this.nodeUnderMouse != null;
       String id = isHovering ? this.nodeUnderMouse.getId() : null;
 
+      Edge oldEdge = this.edgeUnderMouse;
+      this.edgeUnderMouse = getEdgeUnderMouse(e);
+      
       if (wasHovering && !isHovering) {
         notifyNodeOut(e);
       } else if (!wasHovering && isHovering) {
@@ -750,6 +843,15 @@ public class GraphPane extends JComponent
       } else if (wasHovering && isHovering && !id.equals(oldId)) {
         notifyNodeOut(e);
         notifyNodeHover(getHoveredNode(), e);
+      } else {
+          if(oldEdge == null && this.edgeUnderMouse != null) {
+              notifyEdgeHover(this.edgeUnderMouse, e);
+          }else if(oldEdge != null && this.edgeUnderMouse == null) {
+              notifyEdgeOut(oldEdge, e);
+          }else if(oldEdge != null && this.edgeUnderMouse != null && !oldEdge.equals(this.edgeUnderMouse)) {
+              notifyEdgeOut(oldEdge, e);
+              notifyEdgeHover(this.edgeUnderMouse, e);
+          }
       }
       repaint();
     }
@@ -773,6 +875,10 @@ public class GraphPane extends JComponent
 
   public boolean isNodeSelected(Node node) {
     return this.selectedNodes.contains(node.getId());
+  }
+  
+  public boolean isEdgeSelected(Edge edge) {
+      return this.selectedEdges.contains(edge.getId());
   }
 
   public Set<Node> getSelectedNodes() {
@@ -835,9 +941,32 @@ public class GraphPane extends JComponent
     this.selectedNodes.remove(id);
     repaint();
   }
+  
+  public void selectEdge(String id) {
+      selectEdge(id, false);
+  }
+  
+  public void selectEdge(String id, boolean keepSelection) {
+      if (!this.graph.containsEdge(id)) {
+          throw new IllegalArgumentException("Edge " + id + " does not exist.");
+      }
+      if(!keepSelection) {
+          this.selectedEdges.clear();    
+      }
+      
+      if(this.selectedEdges.add(id) || !keepSelection) {
+          repaint();
+      }
+  }
+  
+  public void deselectEdge(String id) {
+      this.selectedEdges.remove(id);
+      repaint();
+    }
 
   public void deselectAll() {
     this.selectedNodes.clear();
+    this.selectedEdges.clear();
     repaint();
   }
 
