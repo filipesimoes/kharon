@@ -39,6 +39,11 @@ public class OverlappedEdges extends Edge{
         return incomingEdges.size() + outcomingEdges.size();
     }
     
-    
+    public boolean isDoubleDirection() {
+        return incomingEdges.size() > 0 && outcomingEdges.size() > 0;
+    }
 
+    public boolean isReverseDirection() {
+        return incomingEdges.size() > 0 && outcomingEdges.size() == 0; 
+    }
 }
