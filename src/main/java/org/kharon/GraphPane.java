@@ -572,7 +572,7 @@ public class GraphPane extends JComponent
       newZoom = Math.max(newZoom, MIN_ZOOM);
 
       if (zoom != newZoom) {
-        setZoom(newZoom);
+        setZoom(newZoom, e.getPoint());
         repaint();
       }
     }
@@ -592,29 +592,53 @@ public class GraphPane extends JComponent
   public double getZoom() {
     return transform.getScaleX();
   }
-
+  
   public void setZoom(double zoom) {
-    zoom = Math.min(zoom, MAX_ZOOM);
-    zoom = Math.max(zoom, MIN_ZOOM);
-    setGraphZoom(zoom);
+      setZoom(zoom, null);
   }
 
+  public void setZoom(double zoom, Point evtPoint) {
+    zoom = Math.min(zoom, MAX_ZOOM);
+    zoom = Math.max(zoom, MIN_ZOOM);
+    setGraphZoom(zoom, evtPoint);
+  }
+  
   protected void setGraphZoom(double zoom) {
+      setGraphZoom(zoom, null);
+  }
+
+  protected void setGraphZoom(double zoom, Point evtPoint) {
     double oldZoom = getZoom();
 
     double translateX = this.getTranslateX();
     double translateY = this.getTranslateY();
+    
+    Point2D invPoint = null;
+    if(evtPoint != null)
+        invPoint = invert(evtPoint);
 
     this.transform.setToScale(zoom, zoom);
     this.transform.translate(translateX / oldZoom, translateY / oldZoom);
-
+    
     try {
       this.inverseTransform = this.transform.createInverse();
     } catch (NoninvertibleTransformException e) {
       throw new RuntimeException(e);
     }
+    
     notifyZoomChanged();
     resetBuffer();
+    
+    if(invPoint != null) {
+        double widthOffset = getSize().width / 2d;
+        double heightOffset = getSize().height / 2d;
+        
+        double dx = (evtPoint.getX() - widthOffset) / zoom;
+        double dy = (evtPoint.getY() - heightOffset) / zoom;
+        
+        centerStageAt(invPoint.getX() - dx, invPoint.getY() - dy);
+    }
+    
   }
 
   @Override
