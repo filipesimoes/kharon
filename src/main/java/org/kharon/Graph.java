@@ -92,28 +92,24 @@ public class Graph implements Cloneable {
       for (String nodeId : nodeIds) {
         NodeHolder nodeHolder = this.nodeIndex.get(nodeId);
         HashMap<String, OverlappedEdges> overlapsPerNode = new HashMap<>();
-        for(Edge edge : nodeHolder.getOutcomingEdges()) {
+        for(Edge edge : nodeHolder.getEdges()) {
             if(addedEdges.contains(edge)) {
                 continue;
             }
-            OverlappedEdges overlapEdge = overlapsPerNode.get(edge.getTarget());
+            String pairNode = edge.getSource();
+            if(pairNode.equals(nodeId)) {
+                pairNode = edge.getTarget();
+            }
+            OverlappedEdges overlapEdge = overlapsPerNode.get(pairNode);
             if(overlapEdge == null){
-                overlapEdge = new OverlappedEdges(nodeId, edge.getTarget());
-                overlapsPerNode.put(edge.getTarget(), overlapEdge);
+                overlapEdge = new OverlappedEdges(nodeId, pairNode);
+                overlapsPerNode.put(pairNode, overlapEdge);
             }
-            overlapEdge.addOutcomingEdge(edge);
-            addedEdges.add(edge);
-        }
-        for(Edge edge : nodeHolder.getIncomingEdges()) {
-            if(addedEdges.contains(edge)) {
-                continue;
+            if(edge.getSource().equals(overlapEdge.getSource())) {
+                overlapEdge.addOutcomingEdge(edge);
+            }else {
+                overlapEdge.addIncomingEdge(edge);
             }
-            OverlappedEdges overlapEdge = overlapsPerNode.get(edge.getSource());
-            if(overlapEdge == null){
-                overlapEdge = new OverlappedEdges(edge.getSource(), nodeId);
-                overlapsPerNode.put(edge.getSource(), overlapEdge);
-            }
-            overlapEdge.addIncomingEdge(edge);
             addedEdges.add(edge);
         }
         result.addAll(overlapsPerNode.values());
