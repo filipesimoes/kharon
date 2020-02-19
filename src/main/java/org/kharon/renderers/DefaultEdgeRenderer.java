@@ -15,6 +15,7 @@ import org.kharon.Edge;
 import org.kharon.Graph;
 import org.kharon.GraphShape;
 import org.kharon.Node;
+import org.kharon.OverlappedEdges;
 
 public class DefaultEdgeRenderer implements EdgeRenderer {
 
@@ -64,7 +65,7 @@ public class DefaultEdgeRenderer implements EdgeRenderer {
     Font font = g.getFont();
     FontMetrics fontMetrics = g.getFontMetrics(font);
 
-    String label = edge.getLabel();
+    String label = !(edge instanceof OverlappedEdges) ? edge.getLabel() : "[" + ((OverlappedEdges)edge).getEdgeCount() + "]";
     double distance = Point2D.distance(x1, y1, x2, y2);
 
     int labelWidth = label != null ? fontMetrics.stringWidth(label) : 0;
