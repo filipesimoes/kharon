@@ -4,16 +4,16 @@ import java.awt.Color;
 
 public class Edge implements Cloneable {
 
-  private String id;
-  private String source;
-  private String target;
+  protected String id;
+  protected String source;
+  protected String target;
 
   private String label;
 
   private String type = "default";
   private Color color;
 
-  private Edge() {
+  protected Edge() {
     super();
   }
 

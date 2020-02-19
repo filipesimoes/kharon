@@ -83,6 +83,44 @@ public class Graph implements Cloneable {
 
     return result;
   }
+  
+  public Collection<OverlappedEdges> getNodesOverlappedEdges(Collection<String> nodeIds) {
+      
+      Collection<OverlappedEdges> result = new ArrayList<>();
+      Set<Edge> addedEdges = new HashSet<>();
+
+      for (String nodeId : nodeIds) {
+        NodeHolder nodeHolder = this.nodeIndex.get(nodeId);
+        HashMap<String, OverlappedEdges> overlapsPerNode = new HashMap<>();
+        for(Edge edge : nodeHolder.getOutcomingEdges()) {
+            if(addedEdges.contains(edge)) {
+                continue;
+            }
+            OverlappedEdges overlapEdge = overlapsPerNode.get(edge.getTarget());
+            if(overlapEdge == null){
+                overlapEdge = new OverlappedEdges(nodeId, edge.getTarget());
+                overlapsPerNode.put(edge.getTarget(), overlapEdge);
+            }
+            overlapEdge.addOutcomingEdge(edge);
+            addedEdges.add(edge);
+        }
+        for(Edge edge : nodeHolder.getIncomingEdges()) {
+            if(addedEdges.contains(edge)) {
+                continue;
+            }
+            OverlappedEdges overlapEdge = overlapsPerNode.get(edge.getSource());
+            if(overlapEdge == null){
+                overlapEdge = new OverlappedEdges(edge.getSource(), nodeId);
+                overlapsPerNode.put(edge.getSource(), overlapEdge);
+            }
+            overlapEdge.addIncomingEdge(edge);
+            addedEdges.add(edge);
+        }
+        result.addAll(overlapsPerNode.values());
+      }
+
+      return result;
+  }
 
   public void addNodes(Collection<Node> nodes) {
     addNodes(null, nodes);

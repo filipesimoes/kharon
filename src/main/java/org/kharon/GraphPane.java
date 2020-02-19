@@ -174,12 +174,15 @@ public class GraphPane extends JComponent
     GraphRenderer graphRenderer = renderers.getGraphRenderer(this.graph.getType());
     graphRenderer.render(liveGraphics, this.graph);
 
-    Set<Edge> liveEdges = graph.getNodesEdges(this.liveNodes);
+    Collection<Edge> liveEdges = new ArrayList<>(graph.getNodesOverlappedEdges(this.liveNodes));
     paintEdges(liveGraphics, graphTransformation, clipBounds, liveEdges);
     paintNodes(liveGraphics, graphTransformation, currentTransform, clipBounds, graph.getNodes(this.liveNodes));
+    
+    HashSet<Edge> overlappedEdges = new HashSet<>(liveEdges);
 
+    Collection<Edge> idleEdges = new ArrayList<>(graph.getNodesOverlappedEdges(this.idleNodes));
+    overlappedEdges.addAll(idleEdges);
     if (paintIdleNodes) {
-      Set<Edge> idleEdges = graph.getNodesEdges(this.idleNodes);
       idleEdges.removeAll(liveEdges);
       paintEdges(idleGraphics, graphTransformation, clipBounds, idleEdges);
       paintNodes(idleGraphics, graphTransformation, currentTransform, clipBounds, graph.getNodes(this.idleNodes));
@@ -187,7 +190,7 @@ public class GraphPane extends JComponent
 
     g2d.drawImage(idleBuffer, originX, originY, null);
     
-    paintSelectedEdges(liveGraphics, graphTransformation, clipBounds, graph.getEdges());
+    paintSelectedEdges(liveGraphics, graphTransformation, clipBounds, overlappedEdges);
 
     Node hoveredNode = getHoveredNode();
     if (hoveredNode != null && !isPrinting) {
@@ -463,7 +466,7 @@ public class GraphPane extends JComponent
   
   private Edge getEdgeUnderMouse(MouseEvent evt) {
       Point2D evtPoint = invert(evt.getPoint());
-      Set<Edge> edges = graph.getNodesEdges(this.idleNodes);
+      Collection<Edge> edges = new ArrayList<>(graph.getNodesOverlappedEdges(this.idleNodes));
       
       for (Edge edge : edges) {
         if (isNearEdge(edge, evtPoint))
@@ -948,7 +951,7 @@ public class GraphPane extends JComponent
   
   public void selectEdge(String id, boolean keepSelection) {
       if (!this.graph.containsEdge(id)) {
-          throw new IllegalArgumentException("Edge " + id + " does not exist.");
+          //throw new IllegalArgumentException("Edge " + id + " does not exist.");
       }
       if(!keepSelection) {
           this.selectedEdges.clear();    
@@ -962,7 +965,7 @@ public class GraphPane extends JComponent
   public void deselectEdge(String id) {
       this.selectedEdges.remove(id);
       repaint();
-    }
+  }
 
   public void deselectAll() {
     this.selectedNodes.clear();
