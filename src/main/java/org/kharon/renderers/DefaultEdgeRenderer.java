@@ -65,7 +65,8 @@ public class DefaultEdgeRenderer implements EdgeRenderer {
     Font font = g.getFont();
     FontMetrics fontMetrics = g.getFontMetrics(font);
 
-    String label = !(edge instanceof OverlappedEdges) ? edge.getLabel() : "[" + ((OverlappedEdges)edge).getEdgeCount() + "]";
+    boolean isOverlapped = edge instanceof OverlappedEdges; 
+    String label = !isOverlapped ? edge.getLabel() : "[" + ((OverlappedEdges)edge).getEdgeCount() + "]";
     double distance = Point2D.distance(x1, y1, x2, y2);
 
     int labelWidth = label != null ? fontMetrics.stringWidth(label) : 0;
@@ -104,24 +105,39 @@ public class DefaultEdgeRenderer implements EdgeRenderer {
 
       shape.append(labelShape, false);
     }
-
-    int x1Arrow = (int) (x2 - Math.cos(slope) * target.getSize());
-    int y1Arrow = (int) (y2 + Math.sin(slope) * target.getSize());
-
-    int x2Arrow = (int) (x1Arrow + Math.cos(slope + 3 * Math.PI / 4) * 10);
-    int y2Arrow = (int) (y1Arrow - Math.sin(slope + 3 * Math.PI / 4) * 10);
-
-    int x3Arrow = (int) (x1Arrow + Math.cos(slope - 3 * Math.PI / 4) * 10);
-    int y3Arrow = (int) (y1Arrow - Math.sin(slope - 3 * Math.PI / 4) * 10);
-
-    GeneralPath arrow = new GeneralPath();
-    arrow.moveTo(x1Arrow, y1Arrow);
-    arrow.lineTo(x2Arrow, y2Arrow);
-    arrow.lineTo(x3Arrow, y3Arrow);
-    arrow.closePath();
     
-    shape.append(arrow, false);
+    if(!isOverlapped || !((OverlappedEdges)edge).isDoubleDirection()) {
+        
+        int x1Arrow = x2;
+        int y1Arrow = y2;
+        int size = target.getSize();
+        
+        if(isOverlapped && ((OverlappedEdges)edge).isReverseDirection()) {
+            x1Arrow = x1;
+            y1Arrow = y1;
+            size = source.getSize();
+            slope = Math.atan2(y2 - y1, x1 - x2);
+        }
 
+        x1Arrow = (int) (x1Arrow - Math.cos(slope) * size);
+        y1Arrow = (int) (y1Arrow + Math.sin(slope) * size);
+    
+        int x2Arrow = (int) (x1Arrow + Math.cos(slope + 3 * Math.PI / 4) * 10);
+        int y2Arrow = (int) (y1Arrow - Math.sin(slope + 3 * Math.PI / 4) * 10);
+    
+        int x3Arrow = (int) (x1Arrow + Math.cos(slope - 3 * Math.PI / 4) * 10);
+        int y3Arrow = (int) (y1Arrow - Math.sin(slope - 3 * Math.PI / 4) * 10);
+    
+        GeneralPath arrow = new GeneralPath();
+        arrow.moveTo(x1Arrow, y1Arrow);
+        arrow.lineTo(x2Arrow, y2Arrow);
+        arrow.lineTo(x3Arrow, y3Arrow);
+        arrow.closePath();
+        
+        shape.append(arrow, false);
+
+    }
+        
     GraphShape graphShape = new GraphShape(shape);
 
     Color color = edge.getColor();
