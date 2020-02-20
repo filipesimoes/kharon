@@ -47,10 +47,16 @@ public class DefaultEdgeRenderer implements EdgeRenderer {
 
     int x2 = target.getX() + offset2;
     int y2 = target.getY() + offset2;
+    
+    boolean isOverlapped = edge instanceof OverlappedEdges; 
 
     double slope = Math.atan2(y1 - y2, x2 - x1);
     double pSlope = slope + (Math.PI / 2);
-    final double tickness = 1d;
+    double tickness = 1d;
+    
+    if(isOverlapped) {
+        tickness = Math.ceil(Math.log(((OverlappedEdges)edge).getEdgeCount() + 1));
+    }
 
     GeneralPath shape = new GeneralPath();
     double ticknessOffsetX = tickness * Math.cos(pSlope) / 2d;
@@ -65,7 +71,6 @@ public class DefaultEdgeRenderer implements EdgeRenderer {
     Font font = g.getFont();
     FontMetrics fontMetrics = g.getFontMetrics(font);
 
-    boolean isOverlapped = edge instanceof OverlappedEdges; 
     String label = !isOverlapped ? edge.getLabel() : "[" + ((OverlappedEdges)edge).getEdgeCount() + "]";
     double distance = Point2D.distance(x1, y1, x2, y2);
 
