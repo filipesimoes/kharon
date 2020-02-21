@@ -643,7 +643,7 @@ public class GraphPane extends JComponent
 
   @Override
   public void mouseDragged(MouseEvent evt) {
-    if (this.isEnabled() && SwingUtilities.isLeftMouseButton(evt)) {
+    if (this.isEnabled()) {
       if (!isDragging) {
         startDrag(evt);
       }
