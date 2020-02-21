@@ -18,6 +18,8 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Dimension2D;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -26,6 +28,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -409,6 +412,12 @@ public class GraphPane extends JComponent
         listener.edgeOut(edge, e);
       }
   }
+  
+  private void notifyEdgesSelected(Collection<Edge> edges) {
+      for (EdgeListener listener : this.edgeListeners) {
+        listener.edgesSelected(edges);
+      }
+  }
 
   private void notifyNodePressed(Node node, MouseEvent e) {
     for (NodeListener listener : this.nodeListeners) {
@@ -502,8 +511,10 @@ public class GraphPane extends JComponent
   }
 
   private void applyCurrentSelection(MouseEvent e) {
+    Set<String> prevSelectedEdges = new HashSet<>(selectedEdges);
     if (!e.isControlDown() && !e.isShiftDown()) {
       this.selectedNodes.clear();
+      this.selectedEdges.clear();
     }
     for (Entry<String, NodeBoundingBox> entry : boxesIndex.entrySet()) {
       NodeBoundingBox box = entry.getValue();
@@ -512,6 +523,35 @@ public class GraphPane extends JComponent
         this.selectedNodes.add(id);
       }
     }
+    if(selectedNodes.size() > 0) {
+        return;
+    }
+    Collection<Edge> overlappedEdges = new ArrayList<>(graph.getNodesOverlappedEdges(graph.getNodeIds()));
+    Collection<Edge> edgesSelected = new HashSet<>();
+    for(Edge edge : overlappedEdges) {
+        if(getEdgeShape(edge).intersects(selectionBox)) {
+            selectedEdges.add(edge.getId());
+            edgesSelected.add(edge);
+        }
+    }
+    if(prevSelectedEdges.size() != selectedEdges.size()) {
+        notifyEdgesSelected(edgesSelected);
+    }else {
+        for(String id : selectedEdges) {
+            if(!prevSelectedEdges.contains(id)) {
+                notifyEdgesSelected(edgesSelected);
+                break;
+            }
+        }
+    }
+  }
+  
+  private Shape getEdgeShape(Edge edge) {
+      Node n1 = this.graph.getNode(edge.getSource());
+      Node n2 = this.graph.getNode(edge.getTarget());
+      Line2D shape = new Line2D.Double(n1.getX() + n1.getSize() / 2, n1.getY() + n1.getSize() / 2, 
+              n2.getX() + n2.getSize() / 2, n2.getY() + n2.getSize() / 2);
+      return shape;
   }
 
   @Override
