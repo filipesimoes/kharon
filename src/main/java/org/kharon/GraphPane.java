@@ -413,9 +413,9 @@ public class GraphPane extends JComponent
       }
   }
   
-  private void notifyEdgesSelected(Collection<Edge> edges) {
+  private void notifyEdgesSelected(Collection<Edge> edges, MouseEvent e) {
       for (EdgeListener listener : this.edgeListeners) {
-        listener.edgesSelected(edges);
+        listener.edgesSelected(edges, e);
       }
   }
 
@@ -535,11 +535,11 @@ public class GraphPane extends JComponent
         }
     }
     if(prevSelectedEdges.size() != selectedEdges.size()) {
-        notifyEdgesSelected(edgesSelected);
+        notifyEdgesSelected(edgesSelected, e);
     }else {
         for(String id : selectedEdges) {
             if(!prevSelectedEdges.contains(id)) {
-                notifyEdgesSelected(edgesSelected);
+                notifyEdgesSelected(edgesSelected, e);
                 break;
             }
         }

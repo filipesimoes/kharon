@@ -11,6 +11,6 @@ public interface EdgeListener {
     
     void edgeOut(Edge edge, MouseEvent e);
     
-    void edgesSelected(Collection<Edge> edges);
+    void edgesSelected(Collection<Edge> edges, MouseEvent e);
 
 }
