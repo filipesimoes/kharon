@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.filipesimoes</groupId>
@@ -18,7 +20,16 @@
         </license>
     </licenses>
 
+    <developers>
+        <developer>
+            <id>filipesimoes</id>
+            <name>Filipe Simoes</name>
+            <email>835586+filipesimoes@users.noreply.github.com</email>
+        </developer>
+    </developers>
+
     <scm>
+        <url>https://github.com/filipesimoes/kharon</url>
         <connection>scm:git:https://github.com/filipesimoes/kharon.git</connection>
         <developerConnection>scm:git:https://github.com/filipesimoes/kharon.git</developerConnection>
         <tag>0.1.0</tag>
@@ -57,6 +68,14 @@
                 <configuration>
                     <source>8</source>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
