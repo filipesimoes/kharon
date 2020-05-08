@@ -32,8 +32,6 @@ import org.kharon.Node;
 import org.kharon.NodeListener;
 import org.kharon.StageListener;
 import org.kharon.StageMode;
-import org.kharon.layout.HierarquicalLayout;
-import org.kharon.layout.Layout;
 import org.kharon.renderers.Renderers;
 
 public class Sample {
@@ -100,41 +98,6 @@ public class Sample {
     Edge edge3 = new Edge("3", node2, node4);
     edge3.setLabel("Label 2 > 4");
     graph.addEdge(edge3);
-
-    // int totalNodes = 20;
-    // Node[] nodes = new Node[totalNodes + 1];
-    //
-    // for (int i = 0; i < totalNodes; i++) {
-    // Node node = new Node("" + i);
-    // node.setLabel("Node " + i);
-    // node.setX(50 + (int) (Math.random() * 2000));
-    // node.setY(50 + (int) (Math.random() * 1000));
-    // node.setType("bug");
-    // node.setSize(30);
-    // graph.addNode(node);
-    // nodes[i] = node;
-    // }
-    //
-    // Node node = new Node("special");
-    // node.setLabel("Very long and special label for this node");
-    // node.setX(50 + (int) (Math.random() * 1000));
-    // node.setY(50 + (int) (Math.random() * 600));
-    // node.setType("bug");
-    // node.setSize(30);
-    // graph.addNode(node);
-    // nodes[totalNodes] = node;
-    //
-    // for (int i = 0; i < nodes.length; i++) {
-    // for (int j = 0; j < 2; j++) {
-    // Node target = nodes[(int) ((nodes.length - 1) * Math.random())];
-    // Node source = nodes[i];
-    // String id = "" + i + "_" + j;
-    // Edge edge = new Edge(id, source, target);
-    // edge.setLabel(source.getLabel() + " -> " + target.getLabel());
-    // graph.addEdge(edge);
-    // }
-    // }
-
 
     JFrame frame = new JFrame("Kharon, ferryman of Hades.");
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

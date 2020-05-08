@@ -1,3 +1,6 @@
+
+![Java CI](https://github.com/filipesimoes/kharon/workflows/Java%20CI/badge.svg)
+
 # kharon
 Kharon Graph Visualizer
 

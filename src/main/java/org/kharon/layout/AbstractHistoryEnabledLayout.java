@@ -25,12 +25,6 @@ public abstract class AbstractHistoryEnabledLayout implements Layout, HistoryEna
     performLayout(graph, new SimpleLayoutAction(), null);
   }
 
-  /**
-   * 
-   * @param graph
-   * @param action
-   * @param fontMetrics - may be null
-   */
   protected abstract void performLayout(Graph graph, LayoutAction action, FontMetrics fontMetrics);
 
   private static class SimpleLayoutAction extends LayoutAction {
