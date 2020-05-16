@@ -193,7 +193,8 @@ public class GraphPane extends JComponent
 
     g2d.drawImage(idleBuffer, originX, originY, null);
     
-    paintSelectedEdges(liveGraphics, graphTransformation, clipBounds, overlappedEdges);
+    Set<String> nodesOfSelectedEdges = paintSelectedEdges(liveGraphics, graphTransformation, clipBounds, overlappedEdges);
+    paintNodes(liveGraphics, graphTransformation, currentTransform, clipBounds, graph.getNodes(nodesOfSelectedEdges));
 
     Node hoveredNode = getHoveredNode();
     if (hoveredNode != null && !isPrinting) {
@@ -292,12 +293,17 @@ public class GraphPane extends JComponent
     }
   }
   
-  private void paintSelectedEdges(Graphics2D g2d, AffineTransform tx, Rectangle2D clipBounds, Collection<Edge> edges) {
+  private Set<String> paintSelectedEdges(Graphics2D g2d, AffineTransform tx, Rectangle2D clipBounds, Collection<Edge> edges) {
+      Set<String> nodesUnderEdges = new HashSet<>();
       for (Edge edge : edges) {
         if(selectedEdges.contains(edge.getId())) {
             edge.setColor(Color.RED);
+            nodesUnderEdges.add(edge.getSource());
+            nodesUnderEdges.add(edge.getTarget());
         }else if(edge.equals(this.edgeUnderMouse)){
             edge.setColor(Color.BLACK);
+            nodesUnderEdges.add(edge.getSource());
+            nodesUnderEdges.add(edge.getTarget());
         }else {
             continue;
         }
@@ -308,7 +314,8 @@ public class GraphPane extends JComponent
         }
         edge.setColor(null);
       }
-    }
+      return nodesUnderEdges;
+  }
 
   public BufferedImage toImage() {
     BufferedImage image = new BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TYPE_INT_ARGB);
