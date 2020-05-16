@@ -83,7 +83,7 @@ public class DefaultEdgeRenderer implements EdgeRenderer {
 
       int labelHeight = fontMetrics.getHeight();
 
-      double offsetHeight = 0.2d * labelHeight;
+      double offsetHeight = 0.2d * labelHeight + tickness / 2d;
 
       double labelSlope;
       double offsetDistance;
@@ -126,12 +126,14 @@ public class DefaultEdgeRenderer implements EdgeRenderer {
 
         x1Arrow = (int) (x1Arrow - Math.cos(slope) * size);
         y1Arrow = (int) (y1Arrow + Math.sin(slope) * size);
+        
+        double arrowSize = 10 + tickness / Math.cos(Math.PI / 4);
     
-        int x2Arrow = (int) (x1Arrow + Math.cos(slope + 3 * Math.PI / 4) * 10);
-        int y2Arrow = (int) (y1Arrow - Math.sin(slope + 3 * Math.PI / 4) * 10);
+        int x2Arrow = (int) (x1Arrow + Math.cos(slope + 3 * Math.PI / 4) * arrowSize);
+        int y2Arrow = (int) (y1Arrow - Math.sin(slope + 3 * Math.PI / 4) * arrowSize);
     
-        int x3Arrow = (int) (x1Arrow + Math.cos(slope - 3 * Math.PI / 4) * 10);
-        int y3Arrow = (int) (y1Arrow - Math.sin(slope - 3 * Math.PI / 4) * 10);
+        int x3Arrow = (int) (x1Arrow + Math.cos(slope - 3 * Math.PI / 4) * arrowSize);
+        int y3Arrow = (int) (y1Arrow - Math.sin(slope - 3 * Math.PI / 4) * arrowSize);
     
         GeneralPath arrow = new GeneralPath();
         arrow.moveTo(x1Arrow, y1Arrow);
