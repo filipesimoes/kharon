@@ -54,10 +54,12 @@ public class GraphVizPlainReader {
       int newY = top + node.getY();
 
       Point oldPos = oldPositions.get(node.getId());
-
-      int oldX = (int) oldPos.getX();
-      int oldY = (int) oldPos.getY();
-      action.move(node, oldX, oldY, newX, newY);
+      
+      if (oldPos != null) {
+        int oldX = (int) oldPos.getX();
+        int oldY = (int) oldPos.getY();
+        action.move(node, oldX, oldY, newX, newY);
+      }
     }
 
     return graph.getBoundingBox();
