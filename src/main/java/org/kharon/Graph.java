@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.kharon.layout.Layout;
@@ -329,8 +330,8 @@ public class Graph implements Cloneable {
 
     private Node node;
 
-    private Map<String, Edge> incoming = new HashMap<>();
-    private Map<String, Edge> outcoming = new HashMap<>();
+    private Map<String, Edge> incoming = new ConcurrentHashMap<>();
+    private Map<String, Edge> outcoming = new ConcurrentHashMap<>();
 
     private NodeHolder() {
       super();
