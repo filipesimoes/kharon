@@ -44,6 +44,10 @@ public class NodeMoveRecorder extends NodeAdapter {
     List<Integer> newXs = new ArrayList<>();
     List<Integer> newYs = new ArrayList<>();
 
+    if(nodeIds == null) {
+      return;
+    }
+
     for (String nodeId : nodeIds) {
       for (Node node : nodes) {
         if (node.getId().equals(nodeId)) {
