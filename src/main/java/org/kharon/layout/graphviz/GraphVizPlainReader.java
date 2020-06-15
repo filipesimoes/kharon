@@ -8,7 +8,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.kharon.Graph;
 import org.kharon.Node;
@@ -24,6 +26,7 @@ public class GraphVizPlainReader {
     String line = null;
 
     Map<String, Point> oldPositions = new HashMap<>();
+    Set<Node> nodes = new HashSet<>();
 
     while ((line = reader.readLine()) != null) {
       if (line.startsWith("node")) {
@@ -35,6 +38,7 @@ public class GraphVizPlainReader {
         int newY = (int) (Double.parseDouble(values[3]) * multiplier);
 
         Node node = graph.getNode(id);
+        nodes.add(node);
 
         oldPositions.put(id, new Point(node.getX(), node.getY()));
 
@@ -49,17 +53,15 @@ public class GraphVizPlainReader {
     Rectangle rect = graph.getBoundingBox();
     int top = middle - (int) (rect.getHeight() / 2);
 
-    for (Node node : graph.getNodes()) {
+    for (Node node : nodes) {
       int newX = left + node.getX();
       int newY = top + node.getY();
 
       Point oldPos = oldPositions.get(node.getId());
       
-      if (oldPos != null) {
-        int oldX = (int) oldPos.getX();
-        int oldY = (int) oldPos.getY();
-        action.move(node, oldX, oldY, newX, newY);
-      }
+      int oldX = (int) oldPos.getX();
+      int oldY = (int) oldPos.getY();
+      action.move(node, oldX, oldY, newX, newY);
     }
 
     return graph.getBoundingBox();
