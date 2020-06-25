@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +29,16 @@ public class Graph implements Cloneable {
   private List<GraphListener> listeners = new ArrayList<>();
 
   private GroupPositioner groupPositioner = new RandomGroupPositioner();
+  
+  private LinkedHashMap<String, Collection<OverlappedEdges>> overlappedEdgesCache = new LinkedHashMap<String, Collection<OverlappedEdges>>(16, 0.75f, true) {
+
+    private static final long serialVersionUID = 1L;
+
+    @Override
+      protected boolean removeEldestEntry(Map.Entry<String, Collection<OverlappedEdges>> eldest) {
+          return size() > 100;
+      }
+  };
 
   public String getType() {
     return type;
@@ -87,10 +98,16 @@ public class Graph implements Cloneable {
   
   public Collection<OverlappedEdges> getNodesOverlappedEdges(Collection<String> nodeIds) {
       
-      Collection<OverlappedEdges> result = new ArrayList<>();
+      String ids = nodeIds.stream().sorted().collect(Collectors.joining("-"));
+      
+      Collection<OverlappedEdges> result = overlappedEdgesCache.get(ids);
+      if(result != null) return result;
+      
+      result = new ArrayList<>();
       Set<Edge> addedEdges = new HashSet<>();
 
-      for (String nodeId : nodeIds) {
+      //toArray() decrease chance of ConcurrentModificationException
+      for (String nodeId : nodeIds.toArray(new String[nodeIds.size()])) {
         NodeHolder nodeHolder = this.nodeIndex.get(nodeId);
         HashMap<String, OverlappedEdges> overlapsPerNode = new HashMap<>();
         for(Edge edge : nodeHolder.getEdges()) {
@@ -115,6 +132,8 @@ public class Graph implements Cloneable {
         }
         result.addAll(overlapsPerNode.values());
       }
+      
+      overlappedEdgesCache.put(ids, result);
 
       return result;
   }
@@ -207,6 +226,7 @@ public class Graph implements Cloneable {
   }
 
   private void addEdgesToGraph(Collection<Edge> edges) {
+    overlappedEdgesCache.clear();
     for (Edge edge : edges) {
       this.edgeIndex.put(edge.getId(), edge);
 
@@ -237,6 +257,7 @@ public class Graph implements Cloneable {
 
   private Set<Edge> removeEdgesFromGraph(Collection<Edge> edges) {
     Set<Edge> removedEdges = new HashSet<>();
+    overlappedEdgesCache.clear();
     for (Edge edge : edges) {
       Edge removed = this.edgeIndex.remove(edge.getId());
       if (removed != null) {
