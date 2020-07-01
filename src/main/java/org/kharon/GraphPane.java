@@ -159,6 +159,10 @@ public class GraphPane extends JComponent
     BufferedImage liveBuffer = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
     Graphics2D liveGraphics = liveBuffer.createGraphics();
     liveGraphics.setRenderingHints(rh);
+    
+    //resetBuffer from other thread could cause NPE because it nulls attributes below
+    BufferedImage idleBuffer = this.idleBuffer;
+    Graphics2D idleGraphics = this.idleGraphics;
 
     boolean paintIdleNodes = idleBuffer == null || idleBuffer.getHeight() != imageHeight
         || idleBuffer.getWidth() != imageWidth || this.lastBufferX != originX || this.lastBufferY != originY;
