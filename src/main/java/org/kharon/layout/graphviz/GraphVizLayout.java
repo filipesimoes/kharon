@@ -10,6 +10,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -125,7 +126,11 @@ public class GraphVizLayout extends AbstractHistoryEnabledLayout {
     }
 
     Collection<Edge> edges = graph.getEdges(start);
-    subGraph.addEdges(edges);
+    HashMap<String, Edge> overlappedEdges = new HashMap<>();
+    for(Edge edge : edges) {
+      overlappedEdges.putIfAbsent(edge.getSource() + "-" + edge.getTarget(), edge);
+    }
+    subGraph.addEdges(overlappedEdges.values());
   }
 
   private List<String> getCmds() {
