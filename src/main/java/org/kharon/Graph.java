@@ -30,7 +30,7 @@ public class Graph implements Cloneable {
 
   private GroupPositioner groupPositioner = new RandomGroupPositioner();
   
-  private LinkedHashMap<String, Collection<OverlappedEdges>> overlappedEdgesCache = new LinkedHashMap<String, Collection<OverlappedEdges>>(16, 0.75f, true) {
+  private Map<String, Collection<OverlappedEdges>> overlappedEdgesCache = Collections.synchronizedMap(new LinkedHashMap<String, Collection<OverlappedEdges>>(16, 0.75f, true) {
 
     private static final long serialVersionUID = 1L;
 
@@ -38,7 +38,7 @@ public class Graph implements Cloneable {
       protected boolean removeEldestEntry(Map.Entry<String, Collection<OverlappedEdges>> eldest) {
           return size() > 100;
       }
-  };
+  });
 
   public String getType() {
     return type;
@@ -226,7 +226,6 @@ public class Graph implements Cloneable {
   }
 
   private void addEdgesToGraph(Collection<Edge> edges) {
-    overlappedEdgesCache.clear();
     for (Edge edge : edges) {
       this.edgeIndex.put(edge.getId(), edge);
 
@@ -240,6 +239,7 @@ public class Graph implements Cloneable {
       targetHolder.getNode().increaseIncomingDegree();
       targetHolder.addEdge(edge);
     }
+    overlappedEdgesCache.clear();
   }
 
   public void addEdge(Edge edge) {
@@ -257,7 +257,6 @@ public class Graph implements Cloneable {
 
   private Set<Edge> removeEdgesFromGraph(Collection<Edge> edges) {
     Set<Edge> removedEdges = new HashSet<>();
-    overlappedEdgesCache.clear();
     for (Edge edge : edges) {
       Edge removed = this.edgeIndex.remove(edge.getId());
       if (removed != null) {
@@ -274,6 +273,7 @@ public class Graph implements Cloneable {
         removedEdges.add(removed);
       }
     }
+    overlappedEdgesCache.clear();
     return removedEdges;
   }
 
